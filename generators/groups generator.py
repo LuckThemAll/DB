@@ -12,4 +12,4 @@ CREATE TABLE groups(
 """)
 
 for id, group in enumerate(groups):
-    f_out.write("INSERT INTO groups VALUES(%d, %s);\n" % (id + 1, group))
+    f_out.write("INSERT INTO groups VALUES(%d, '%s');\n" % (id + 1, group))

@@ -18,5 +18,5 @@ CREATE TABLE subjects(
 group_id = 1
 
 for id, subject in enumerate(subjects):
-    f_out.write("INSERT INTO subjects VALUES(%d, %s, %d);\n" % (id + 1, subject, group_id))
+    f_out.write("INSERT INTO subjects VALUES(%d, '%s', %d);\n" % (id + 1, subject, group_id))
     group_id = group_id + 1 if group_id < 5 else 1
