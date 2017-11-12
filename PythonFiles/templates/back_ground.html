@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<h2>Simple WEB DatabaseManagementSystem</h2>
+</head>
+<body>
+    <form name="comboBox">
+		<select name="tables">
+            {% with s = selected_table %}
+                {% for table in tables %}
+                    <option
+                            {% if s is defined and loop.index0 == s %} selected {% endif %}
+                            value="{{ loop.index0 }}"
+                    >{{ table }}</option>
+                {% endfor %}
+            {% endwith %}
+		</select>
+		<input type="submit" value="Показать">
+	</form>
+    <table border="3" width="30%">
+        <tr>
+            {% for header in headers %}
+                <th>
+                    {{ header }}
+                </th>
+            {% endfor %}
+        </tr>
+        {% for record in records %}
+            <tr>
+                {% for col in record %}
+                    <td>{{ col }}</td>
+                {% endfor %}
+            </td>
+        {% endfor %}
+    </table>
+</body>
+</html>
