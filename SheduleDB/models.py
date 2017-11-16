@@ -29,6 +29,14 @@ class NamedModel(BaseModel):
         self.add_property('String', 'name', 'NAME', title, 200)
 
 
+class RefModel(BaseModel):
+    def __init__(self, table_name):
+        super().__init__(table_name)
+
+    def get_titles(self):
+        return [self.columns[item]['source']().columns['name']['title'] for item in self.columns]
+
+
 class Audiences(NamedModel):
     def __init__(self):
         super().__init__('AUDIENCES', 'Номер аудитории')
@@ -37,12 +45,6 @@ class Audiences(NamedModel):
 class Groups(NamedModel):
     def __init__(self):
         super().__init__('GROUPS', 'Группа')
-
-
-class Lessons(NamedModel):
-    def __init__(self):
-        super().__init__('LESSONS', 'Номер пары')
-        self.add_property('Integer', 'order_number', 'ORDER_NUMBER', 'Порядок', 20)
 
 
 class LessonTypes(NamedModel):
@@ -60,27 +62,33 @@ class Teachers(NamedModel):
         super().__init__('TEACHERS', 'ФИО')
 
 
+class Lessons(NamedModel):
+    def __init__(self):
+        super().__init__('LESSONS', 'Номер пары')
+        self.add_property('Integer', 'order_number', 'ORDER_NUMBER', 'Порядок', 20)
+
+
 class WeekDays(NamedModel):
     def __init__(self):
         super().__init__('WEEKDAYS', 'День недели')
         self.add_property('Integer', 'order_number', 'ORDER_NUMBER', 'Порядок', 20)
 
 
-class SubjectGroup(BaseModel):
+class SubjectGroup(RefModel):
     def __init__(self):
         super().__init__('SUBJECT_GROUP')
         self.add_property('Reference', 'subject_id', 'ID', Subjects, 'NAME')
         self.add_property('Reference', 'group_id', 'ID', Groups, 'NAME')
 
 
-class SubjectTeacher(BaseModel):
+class SubjectTeacher(RefModel):
     def __init__(self):
         super().__init__('SUBJECT_TEACHER')
         self.add_property('Reference', 'subject_id', 'ID', Subjects, 'NAME')
         self.add_property('Reference', 'teacher_id', 'ID', Teachers, 'NAME')
 
 
-class SchedItems(BaseModel):
+class SchedItems(RefModel):
     def __init__(self):
         super().__init__('SCHED_ITEM')
         self.add_property('Reference', 'lesson_id', 'ID', Lessons, 'NAME')
