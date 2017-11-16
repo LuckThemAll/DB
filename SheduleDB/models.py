@@ -2,236 +2,91 @@ from db_connect import cur
 from abc import *
 
 
-class NamedModel(metaclass=ABCMeta):
-    def __init__(self, title='String', table_name='String', pixels=50):
-        self.id = {'col_name': 'ID', 'title': 'Ключ', 'pixels': 20}
-        self.name = {'col_name': 'NAME', 'title': title, 'pixels': pixels}
+class BaseModel(metaclass=ABCMeta):
+    def __init__(self, table_name=None):
         self.table_name = table_name
+        self.columns = {}
 
-    def get_names(self):
-        sql = 'select %s from %s' % (self.name['col_name'], self.table_name)
-        if cur.execute(sql):
-            return [col[0] for col in cur.fetchall()]
+    def add_property(self, property_type, name, *args):
+        template = {'Integer': {'Type': property_type, 'col_name': args[0], 'title': args[1], 'pixels': args[2]},
+                    'String': {'Type': property_type, 'col_name': args[0], 'title': args[1], 'pixels': args[2]},
+                    'Reference': {'Type': property_type, 'ref': args[0], 'source': args[1], 'field': args[2]}
+                    }
+        self.columns[name] = template[property_type]
 
-    def get_ids(self):
-        sql = 'select %s from %s' % (self.id['col_name'], self.table_name)
-        if cur.execute(sql):
-            return [col[0] for col in cur.fetchall()]
+    def get_titles(self):
+        return [self.columns[item]['title'] for item in self.columns]
 
-    def find_one(self, id):
-        sql = 'select NAME from %s s where s.ID=%d' % (self.table_name, id)
-        if cur.execute(sql):
-            return cur.fetchall()[0][0]
+    def get_rows(self):
 
-    def get_name_title(self):
-        return self.name['title']
+        pass
+
+
+class NamedModel(BaseModel):
+    def __init__(self, table_name=None, title=None):
+        super().__init__(table_name)
+        self.add_property('Integer', 'id', 'ID', 'Ключ', 20)
+        self.add_property('String', 'name', 'NAME', title, 200)
 
 
 class Audiences(NamedModel):
     def __init__(self):
-        super().__init__('Номер аудитории', 'AUDIENCES')
-
-    def get_titles(self):
-        return [self.id['title'], self.name['title']]
-
-    def get_rows(self):
-        sql = 'select %s.ID, %s.NAME from %s' % (self.table_name, self.table_name, self.table_name)
-        if cur.execute(sql):
-            return cur.fetchall()
+        super().__init__('AUDIENCES', 'Номер аудитории')
 
 
 class Groups(NamedModel):
     def __init__(self):
-        super().__init__('Группа', 'GROUPS')
-
-    def get_titles(self):
-        return [self.id['title'], self.name['title']]
-
-    def get_rows(self):
-        sql = 'select %s.ID, %s.NAME from %s' % (self.table_name, self.table_name, self.table_name)
-        if cur.execute(sql):
-            return cur.fetchall()
+        super().__init__('GROUPS', 'Группа')
 
 
 class Lessons(NamedModel):
     def __init__(self):
-        super().__init__('Пара', 'LESSONS')
-        self.order_number = {'col_name': 'ORDER_NUMBER', 'title': 'Порядок', 'pixels': 20}
-
-    def get_titles(self):
-        return [self.id['title'], self.name['title'], self.order_number['title']]
-
-    def get_rows(self):
-        sql = 'select %s.ID, %s.NAME, %s.ORDER_NUMBER from %s' % (self.table_name, self.table_name, self.table_name, self.table_name)
-        if cur.execute(sql):
-            return cur.fetchall()
+        super().__init__('LESSONS', 'Номер пары')
+        self.add_property('Integer', 'order_number', 'ORDER_NUMBER', 'Порядок', 20)
 
 
 class LessonTypes(NamedModel):
     def __init__(self):
-        super().__init__('Тип занятия', 'LESSON_TYPES', 50)
-
-    def get_titles(self):
-        return [self.id['title'], self.name['title']]
-
-    def get_rows(self):
-        sql = 'select %s.ID, %s.NAME from %s' % (self.table_name, self.table_name, self.table_name)
-        if cur.execute(sql):
-            return cur.fetchall()
+        super().__init__('LESSON_TYPES', 'Вид занятия')
 
 
 class Subjects(NamedModel):
     def __init__(self):
-        super().__init__('Предмет', 'SUBJECTS')
-
-    def get_titles(self):
-        return [self.id['title'], self.name['title']]
-
-    def get_rows(self):
-        sql = 'select %s.ID, %s.NAME from %s' % (self.table_name, self.table_name, self.table_name)
-        if cur.execute(sql):
-            return cur.fetchall()
+        super().__init__('SUBJECTS', 'Предмет')
 
 
 class Teachers(NamedModel):
     def __init__(self):
-        super().__init__('ФИО', 'TEACHERS')
-
-    def get_titles(self):
-        return [self.id['title'], self.name['title']]
-
-    def get_rows(self):
-        sql = 'select %s.ID, %s.NAME from %s' % (self.table_name, self.table_name, self.table_name)
-        if cur.execute(sql):
-            return cur.fetchall()
-
-
-class Select:
-    def __init__(self, table_name, magic):
-        self.joins = ''
-        self.cols = ''
-        size = len(magic)-1
-        for i, item in enumerate(magic):
-            self.cols += magic[item]['External_Table'] + '.NAME'
-            if i != size:
-                self.cols += ','
-            self.cols += ' '
-            self.add_join(magic[item]['External_Table'],
-                          table_name,
-                          magic[item]['External_Ref'],
-                          item)
-        self.sql = 'select ' + self.cols + ' from ' + table_name + self.joins
-
-    def __call__(self):
-        return self.sql
-
-    def add_join(self, ext_table_name, int_table_name, ext_param, int_param):
-        params = ' on %s.%s=%s.%s ' % (ext_table_name, ext_param, int_table_name, int_param)
-        self.joins += ' left join ' + ext_table_name + params
-
-
-class SubjectGroup:
-    def __init__(self):
-        self.group_id = {'External_Table': Groups().table_name,
-                         'title': 'Группа',
-                         'External_Ref': Groups().id['col_name']
-                         }
-        self.subject_id = {'External_Table': Subjects().table_name,
-                           'title': 'Предмет',
-                           'External_Ref': Subjects().id['col_name']
-                           }
-
-    def get_titles(self):
-        return [self.group_id['title'], self.subject_id['title']]
-
-    def get_rows(self):
-        sql = Select('SUBJECT_GROUP', self.__dict__)()
-        cur.execute(sql)
-        return cur.fetchall()
-
-
-class SubjectTeacher:
-    def __init__(self):
-        self.teacher_id = {'External_Table': Teachers().table_name,
-                           'title': 'ФИО',
-                           'External_Ref': Teachers().id['col_name']
-                           }
-        self.subject_id = {'External_Table': Subjects().table_name,
-                           'title': 'Предмет',
-                           'External_Ref': Subjects().id['col_name']
-                           }
-
-    def get_titles(self):
-        return [self.teacher_id['title'], self.subject_id['title']]
-
-    def get_rows(self):
-        sql = Select('SUBJECT_TEACHER', self.__dict__)()
-        print(sql)
-        cur.execute(sql)
-        return cur.fetchall()
+        super().__init__('TEACHERS', 'ФИО')
 
 
 class WeekDays(NamedModel):
     def __init__(self):
-        super().__init__('День недели', 'WEEKDAYS', 100)
-        self.order_number = {'col_name': 'ORDER_NUMBER', 'title': 'Порядок', 'pixels': 20}
-
-    def get_titles(self):
-        return [self.id['title'], self.name['title'], self.order_number['title']]
-
-    def get_rows(self):
-        sql = 'select %s.ID, %s.NAME, %s.%s from %s' % (self.table_name, self.table_name, self.table_name, self.order_number['col_name'], self.table_name)
-        if cur.execute(sql):
-            return cur.fetchall()
+        super().__init__('WEEKDAYS', 'День недели')
+        self.add_property('Integer', 'order_number', 'ORDER_NUMBER', 'Порядок', 20)
 
 
-class SchedItems:
+class SubjectGroup(BaseModel):
     def __init__(self):
-        self.lesson_id = {'External_Table': Lessons().table_name,
-                          'title': 'Номер пары',
-                          'External_Ref': Lessons().id['col_name'],
-                          }
+        super().__init__('SUBJECT_GROUP')
+        self.add_property('Reference', 'subject_id', 'ID', Subjects, 'NAME')
+        self.add_property('Reference', 'group_id', 'ID', Groups, 'NAME')
 
-        self.subject_id = {'External_Table': Subjects().table_name,
-                           'title': 'Предмет',
-                           'External_Ref': Subjects().id['col_name']
-                           }
 
-        self.audience_id = {'External_Table': Audiences().table_name,
-                            'title': 'Номер кабинета',
-                            'External_Ref': Audiences().id['col_name']
-                            }
+class SubjectTeacher(BaseModel):
+    def __init__(self):
+        super().__init__('SUBJECT_TEACHER')
+        self.add_property('Reference', 'subject_id', 'ID', Subjects, 'NAME')
+        self.add_property('Reference', 'teacher_id', 'ID', Teachers, 'NAME')
 
-        self.group_id = {'External_Table': Groups().table_name,
-                         'title': 'Группа',
-                         'External_Ref': Groups().id['col_name']
-                         }
 
-        self.teacher_id = {'External_Table': Teachers().table_name,
-                           'title': 'ФИО',
-                           'External_Ref': Teachers().id['col_name']
-                           }
-
-        self.type_id = {'External_Table': LessonTypes().table_name,
-                        'title': 'Вид занятия',
-                        'External_Ref': LessonTypes().id['col_name']
-                        }
-
-        self.weekday_id = {'External_Table': WeekDays().table_name,
-                           'title': 'День недели',
-                           'External_Ref': WeekDays().id['col_name']
-                           }
-
-    def get_titles(self):
-        return [self.lesson_id['title'],
-                self.subject_id['title'],
-                self.audience_id['title'],
-                self.group_id['title'],
-                self.teacher_id['title'],
-                self.type_id['title'],
-                self.weekday_id['title']]
-
-    def get_rows(self):
-        sql = Select('SCHED_ITEMS', self.__dict__)()
-        cur.execute(sql)
-        return cur.fetchall()
+class SchedItems(BaseModel):
+    def __init__(self):
+        super().__init__('SCHED_ITEM')
+        self.add_property('Reference', 'lesson_id', 'ID', Lessons, 'NAME')
+        self.add_property('Reference', 'subject_id', 'ID', Subjects, 'NAME')
+        self.add_property('Reference', 'audience_id', 'ID', Audiences, 'NAME')
+        self.add_property('Reference', 'group_id', 'ID', Groups, 'NAME')
+        self.add_property('Reference', 'teacher_id', 'ID', Teachers, 'NAME')
+        self.add_property('Reference', 'type_id', 'ID', LessonTypes, 'NAME')
+        self.add_property('Reference', 'weekday_id', 'ID', WeekDays, 'NAME')
