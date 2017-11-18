@@ -17,21 +17,23 @@
 		</select>
 		<input type="submit" value="Показать">
 	</form>
-    <table border="3" width="30%">
-        <tr>
-            {% for header in headers %}
-                <th>
-                    {{ header }}
-                </th>
-            {% endfor %}
-        </tr>
-        {% for record in records %}
+     {% if selected_table is defined %}
+        <table border="3" width="30%">
             <tr>
-                {% for col in record %}
-                    <td>{{ col }}</td>
+                {% for header in headers %}
+                    <th>
+                        {{ header }}
+                    </th>
                 {% endfor %}
-            </td>
-        {% endfor %}
-    </table>
+            </tr>
+            {% for record in records %}
+                <tr>
+                    {% for col in record %}
+                        <td>{{ col }}</td>
+                    {% endfor %}
+                </td>
+            {% endfor %}
+        </table>
+    {% endif %}
 </body>
 </html>
