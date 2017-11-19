@@ -7,6 +7,9 @@ class NamedField(metaclass=ABCMeta):
         self.title = title
         self.pixels = pixels
 
+    def get_col_name(self):
+        return self.__dict__['col_name']
+
 
 class IntegerField(NamedField):
     def __init__(self, col_name=None, title=None, pixels=20):
@@ -24,3 +27,5 @@ class ReferenceField:
         self.source = source
         self.field = field
 
+    def get_ref(self):
+        return self.source

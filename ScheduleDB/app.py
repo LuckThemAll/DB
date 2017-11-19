@@ -5,46 +5,32 @@ from models import *
 
 app = Flask(__name__)
 
-
-def get_tables():
-    tables = (
-        'AUDIENCES',
-        'GROUPS',
-        'LESSONS',
-        'LESSON_TYPES',
-        'SCHED_ITEMS',
-        'SUBJECTS',
-        'SUBJECT_GROUP',
-        'SUBJECT_TEACHER',
-        'TEACHERS',
-        'WEEKDAYS',
-    )
-    return tables
-
+tables_dict = {
+          'AUDIENCES': Audiences(),
+          'GROUPS': Groups(),
+          'LESSONS': Lessons(),
+          'LESSON_TYPES': LessonTypes(),
+          'SCHED_ITEMS': SchedItems(),
+          'SUBJECTS': Subjects(),
+          'SUBJECT_GROUP': SubjectGroup(),
+          'SUBJECT_TEACHER': SubjectTeacher(),
+          'TEACHERS': Teachers(),
+          'WEEKDAYS': WeekDays()
+         }
 
 
 @app.route('/')
 def index():
     data = {}
-    tables = get_tables()
-    data['tables'] = tables
+    data['tables'] = [tables_dict[table].title for table in tables_dict]
     selected_table = request.args.get('tables', '')
-    if (selected_table.isdigit() and int(selected_table) >= 0 and int(selected_table) < len(tables)):
-
-        mem = Audiences()
-        print(mem.columns)
-        print(mem.get_titles())
-        print('---------------------------')
-        mem = SubjectTeacher()
-        print(mem.columns)
-        print(mem.get_titles())
-        print('---------------------------')
-        mem = SchedItems()
-        print(mem.columns)
-        print(mem.get_titles())
-        print('---------------------------')
+    if (selected_table.isdigit() and int(selected_table) >= 0 and int(selected_table) < len(tables_dict)):
         selected_table = int(selected_table)
+        tables = [item for item in tables_dict]
+        print(tables)
+        table = tables_dict[tables[selected_table]]
+        print((table.get_rows()))
         data['selected_table'] = selected_table
-        data['headers'] = mem.get_titles()
-        #data['records'] = mem.get_rows()
+        data['headers'] = table.get_titles()
+        data['records'] = table.get_rows()
     return render_template('back_ground.html', **data)
