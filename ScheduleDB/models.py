@@ -47,9 +47,9 @@ class RefModel(BaseModel):
         def get_col_names():
             result = []
             for table in self.__dict__['columns']:
-                result.append(self.__dict__['columns'][table].source.table_name +
-                              '.' +
-                              self.__dict__['columns'][table].field)
+                result.append('{0}.{1}'.format(self.__dict__['columns'][table].source.table_name,
+                                               self.__dict__['columns'][table].field)
+                              )
             return result
 
         for i, col_name in enumerate(get_col_names()):
@@ -59,22 +59,17 @@ class RefModel(BaseModel):
                 query += ', ' + col_name
         query += ' from ' + self.table_name + ' '
 
-        def l_join():
+        def l_joins():
             result = []
             for table in self.__dict__['columns']:
-                result.append('left join ' +
-                              self.__dict__['columns'][table].source.table_name +
-                              ' on ' +
-                              self.__dict__['columns'][table].source.table_name +
-                              '.' +
-                              self.__dict__['columns'][table].ref +
-                              '=' +
-                              self.table_name +
-                              '.' +
-                              table +
-                              ' ')
+                result.append('left join {0} on {0}.{1}={2}.{3} '.
+                              format(self.__dict__['columns'][table].source.table_name,
+                                     self.__dict__['columns'][table].ref,
+                                     self.table_name,
+                                     table)
+                              )
             return result
-        for j in l_join():
+        for j in l_joins():
             query += j
         print(query)
         cur.execute(query)
