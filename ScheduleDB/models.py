@@ -1,5 +1,5 @@
 from db_connect import cur
-from fields import *
+from sqlBuilred import *
 
 
 class BaseModel(metaclass=ABCMeta):
@@ -11,6 +11,13 @@ class BaseModel(metaclass=ABCMeta):
     def get_titles(self):
         return [self.columns[item].title for item in self.columns]
 
+    def get_rows(self, wheres=()):
+        self.sql = SQLBuilder(self)
+        self.sql.create_sql(wheres)
+        print(self.sql.query)
+        cur.execute(self.sql.query, (wheres[1], ))
+        return cur.fetchall()
+
 
 class NamedModel(BaseModel):
     def __init__(self, table_name=None, title=None):
@@ -18,20 +25,12 @@ class NamedModel(BaseModel):
         self.columns['id'] = IntegerField('ID', 'ID', 20)
         self.columns['name'] = StringField('NAME', title, 200)
 
-    def get_rows(self):
-        def get_col_names():
-            return [self.columns[a].get_col_name() for a in self.columns]
+    def get_col_names(self):
+        return [self.table_name + '.' + self.columns[a].get_col_name() for a in self.columns]
 
-        col_names = get_col_names()
-        query = 'select '
-        for i, col_name in enumerate(col_names):
-            if i == 0:
-                query += col_name
-            else:
-                query += ', ' + col_name
-        query += ' from ' + self.table_name
-        cur.execute(query)
-        return cur.fetchall()
+    def get_tab_col(self, col_name):
+        if col_name in self.columns.keys():
+            return self.table_name + '.' + col_name
 
 
 class RefModel(BaseModel):
@@ -41,39 +40,13 @@ class RefModel(BaseModel):
     def get_titles(self):
         return [self.columns[item].source.columns['name'].title for item in self.columns]
 
-    def get_rows(self):
-        query = 'select '
+    def get_col_names(self):
+        cols = self.__dict__['columns']
+        return [cols[table].source.table_name + '.' + cols[table].field for table in cols]
 
-        def get_col_names():
-            result = []
-            for table in self.__dict__['columns']:
-                result.append('{0}.{1}'.format(self.__dict__['columns'][table].source.table_name,
-                                               self.__dict__['columns'][table].field)
-                              )
-            return result
-
-        for i, col_name in enumerate(get_col_names()):
-            if i == 0:
-                query += col_name
-            else:
-                query += ', ' + col_name
-        query += ' from ' + self.table_name + ' '
-
-        def l_joins():
-            result = []
-            for table in self.__dict__['columns']:
-                result.append('left join {0} on {0}.{1}={2}.{3} '.
-                              format(self.__dict__['columns'][table].source.table_name,
-                                     self.__dict__['columns'][table].ref,
-                                     self.table_name,
-                                     table)
-                              )
-            return result
-        for j in l_joins():
-            query += j
-        print(query)
-        cur.execute(query)
-        return cur.fetchall()
+    def get_tab_col(self, col_name):
+        if col_name in self.columns.keys():
+            return self.columns[col_name].source.table_name + '.' + self.columns[col_name].field
 
 
 class Audiences(NamedModel):

@@ -10,15 +10,28 @@ class NamedField(metaclass=ABCMeta):
     def get_col_name(self):
         return self.__dict__['col_name']
 
+    def get_title(self):
+        return self.title
+
+    @abstractmethod
+    def type_check(self, item):
+        pass
+
 
 class IntegerField(NamedField):
     def __init__(self, col_name=None, title=None, pixels=20):
         super().__init__(col_name, title, pixels)
 
+    def type_check(self, item):
+        return type(item) is int
+
 
 class StringField(NamedField):
     def __init__(self, col_name=None, title=None, pixels=20):
         super().__init__(col_name, title, pixels)
+
+    def type_check(self, item):
+        return type(item) is str
 
 
 class ReferenceField:
@@ -29,3 +42,6 @@ class ReferenceField:
 
     def get_ref(self):
         return self.source
+
+    def get_title(self):
+        return self.source.title
