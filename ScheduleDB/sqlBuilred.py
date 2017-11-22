@@ -29,8 +29,7 @@ class SQLBuilder:
                                                                       item))
 
     def add_where(self, wheres):
-        self.query += 'where ' + self.table.get_tab_col(wheres[0]) + ' containing \'?\' '
-        # поиск с рус не работает
+        self.query += 'where ' + self.table.get_tab_col(wheres[0]) + ' containing ? '
 
     def create_sql(self, wheres=()):
         self.add_fields()
