@@ -51,62 +51,62 @@ class RefModel(BaseModel):
 
 class Audiences(NamedModel):
     def __init__(self):
-        super().__init__('AUDIENCES', 'Номер аудитории')
+        super().__init__('AUDIENCES', 'Аудитории')
 
 
 class Groups(NamedModel):
     def __init__(self):
-        super().__init__('GROUPS', 'Группа')
+        super().__init__('GROUPS', 'Группы')
 
 
 class LessonTypes(NamedModel):
     def __init__(self):
-        super().__init__('LESSON_TYPES', 'Вид занятия')
+        super().__init__('LESSON_TYPES', 'Вид занятий')
 
 
 class Subjects(NamedModel):
     def __init__(self):
-        super().__init__('SUBJECTS', 'Предмет')
+        super().__init__('SUBJECTS', 'Предметы')
 
 
 class Teachers(NamedModel):
     def __init__(self):
-        super().__init__('TEACHERS', 'ФИО')
+        super().__init__('TEACHERS', 'Преподаватели')
 
 
 class Lessons(NamedModel):
     def __init__(self):
-        super().__init__('LESSONS', 'Номер пары')
+        super().__init__('LESSONS', 'Порядок пар')
         self.columns['order_number'] = IntegerField('ORDER_NUMBER', 'Порядок', 20)
 
 
 class WeekDays(NamedModel):
     def __init__(self):
-        super().__init__('WEEKDAYS', 'День недели')
+        super().__init__('WEEKDAYS', 'Дни недели')
         self.columns['order_number'] = IntegerField('ORDER_NUMBER', 'Порядок', 20)
 
 
 class SubjectGroup(RefModel):
     def __init__(self):
-        super().__init__('SUBJECT_GROUP', 'Предметы')
-        self.columns['subject_id'] = ReferenceField('ID', Subjects(), 'NAME')
-        self.columns['group_id'] = ReferenceField('ID', Groups(), 'NAME')
+        super().__init__('SUBJECT_GROUP', 'Учебный план')
+        self.columns['subject_id'] = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
+        self.columns['group_id'] = ReferenceField('GROUP_ID', 'Группа', 'ID', Groups(), 'NAME')
 
 
 class SubjectTeacher(RefModel):
     def __init__(self):
-        super().__init__('SUBJECT_TEACHER', 'Нагрузка')
-        self.columns['subject_id'] = ReferenceField('ID', Subjects(), 'NAME')
-        self.columns['teacher_id'] = ReferenceField('ID', Teachers(), 'NAME')
+        super().__init__('SUBJECT_TEACHER', 'Нагрузка учителей')
+        self.columns['subject_id'] = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
+        self.columns['teacher_id'] = ReferenceField('TEACHER_ID', 'ФИО преподавателя', 'ID', Teachers(), 'NAME')
 
 
 class SchedItems(RefModel):
     def __init__(self):
         super().__init__('SCHED_ITEMS', 'Расписание')
-        self.columns['lesson_id'] = ReferenceField('ID', Lessons(), 'NAME')
-        self.columns['subject_id'] = ReferenceField('ID', Subjects(), 'NAME')
-        self.columns['audience_id'] = ReferenceField('ID', Audiences(), 'NAME')
-        self.columns['group_id'] = ReferenceField('ID', Groups(), 'NAME')
-        self.columns['teacher_id'] = ReferenceField('ID', Teachers(), 'NAME')
-        self.columns['type_id'] = ReferenceField('ID', LessonTypes(), 'NAME')
-        self.columns['weekday_id'] = ReferenceField('ID', WeekDays(), 'NAME')
+        self.columns['lesson_id'] = ReferenceField('LESSON_ID', 'Номер пары', 'ID', Lessons(), 'NAME')
+        self.columns['subject_id'] = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
+        self.columns['audience_id'] = ReferenceField('AUDIENCES_ID', 'Номер аудитории', 'ID', Audiences(), 'NAME')
+        self.columns['group_id'] = ReferenceField('GROUP_ID', 'Группа', 'ID', Groups(), 'NAME')
+        self.columns['teacher_id'] = ReferenceField('TEACHER_ID', 'ФИО преподавателя', 'ID', Teachers(), 'NAME')
+        self.columns['type_id'] = ReferenceField('TYPE_ID', 'Тип пары', 'ID', LessonTypes(), 'NAME')
+        self.columns['weekday_id'] = ReferenceField('WEEKDAY_ID', 'День недели', 'ID', WeekDays(), 'NAME')
