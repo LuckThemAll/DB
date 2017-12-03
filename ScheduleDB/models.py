@@ -17,12 +17,14 @@ class BaseModel(metaclass=ABCMeta):
         self.sql_builder.set_fields()
         self.sql_builder.set_from_table()
         self.sql_builder.where_col_names = []
+        self.sql_builder.operators = []
 
     @abstractmethod
-    def fetch_all_by_params(self, col_names, params):
+    def fetch_all_by_params(self, col_names, params, operators):
         self.sql_builder.set_fields()
         self.sql_builder.set_from_table()
         self.sql_builder.add_where_col_names(col_names)
+        self.sql_builder.add_operators(operators)
 
 
 class NamedModel(BaseModel):
@@ -44,8 +46,8 @@ class NamedModel(BaseModel):
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
 
-    def fetch_all_by_params(self, col_names, params):
-        BaseModel.fetch_all_by_params(self, col_names, params)
+    def fetch_all_by_params(self, col_names, params, operators):
+        BaseModel.fetch_all_by_params(self, col_names, params, operators)
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
         return cur.fetchall()
@@ -70,8 +72,8 @@ class RefModel(BaseModel):
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
 
-    def fetch_all_by_params(self, col_names, params):
-        BaseModel.fetch_all_by_params(self, col_names, params)
+    def fetch_all_by_params(self, col_names, params, operators):
+        BaseModel.fetch_all_by_params(self, col_names, params, operators)
         self.sql_builder.add_l_joins()
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)

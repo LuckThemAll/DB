@@ -13,13 +13,32 @@
             {% endwith %}
         </menu>
         <form name="where_params">
-            <select name="search_col">
-                {% for table in search_tables %}
-                    <option {% if selected_col_name_index is defined and loop.index0 == selected_col_name_index %} selected {% endif %}
-                            value="{{ loop.index0 }}">{{ table }}</option>
+            <input type="hidden" name="params_count" value="{{search_data.params_count}}">
+            <div id="params_fields">
+                {% for i in range(search_data.params_count)%}
+                    <div id="params_field" style="padding: 3px">
+                        <select name="search_col">
+                            {% for search_col_name in search_data.search_col_names %}
+                                <option {% if search_data.selected_col_name_indexes[i] is defined and
+                                        search_data.selected_col_name_indexes[i]|int == loop.index0 %}
+                                            selected
+                                        {% endif %}
+                                        value="{{ loop.index0 }}"
+                                >{{ search_col_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="operator">
+                            {% for operator in operators %}
+                                <option {% if search_data.operators[i] == operator %} selected {% endif %}>{{ operator }}</option>
+                            {% endfor %}
+                        </select>
+                        <input name="search_param" type="text" value="{{ search_data.search_params[i] }}" />
+                    </div>
                 {% endfor %}
-            </select>
-            <input name="search_str" type="text" {% if search_str != "" %} value="{{ search_str }}" {% endif %}>
+            </div>
+            <input type="submit" value="Добавить" onclick="params_count.value = {{search_data.params_count + 1}}">
+            <input type="submit" value="Удалить"
+                onclick="{% if search_data.params_count > 1%}params_count.value = {{search_data.params_count - 1}}{%endif%}">
             <input type="submit" value="Показать">
         </form>
     </div>

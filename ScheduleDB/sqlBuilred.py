@@ -5,6 +5,7 @@ class SQLBuilder:
     fields = []
     l_joins = []
     where_col_names = []
+    operators = []
     from_table = ''
     sql = ''
 
@@ -31,6 +32,11 @@ class SQLBuilder:
         for col_name in col_names:
             self.where_col_names.append(self.table.get_tab_col(col_name))
 
+    def add_operators(self, operators):
+        self.operators = []
+        for operator in operators:
+            self.operators.append(operator)
+
     def get_sql(self):
         self.sql = 'select '
         if self.fields:
@@ -47,7 +53,10 @@ class SQLBuilder:
                 self.sql += 'left join {0} on {0}.{1}={2}.{3} '.format(l_join[0], l_join[1], l_join[2], l_join[3])
 
         if self.where_col_names:
-            for where_col_name in self.where_col_names:
-                self.sql += 'where {} containing ? '.format(where_col_name)
+            self.sql += 'where '
+            for i, where_col_name in enumerate(self.where_col_names):
+                self.sql += '{0} {1} ? '.format(where_col_name, self.operators[i])
+                if i < self.where_col_names.__len__() - 1:
+                    self.sql += 'and '
 
         return self.sql
