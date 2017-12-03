@@ -7,16 +7,22 @@ class BaseModel(metaclass=ABCMeta):
         self.table_name = table_name
         self.title = title
         self.columns = {}
+        self.sql_builder = SQLBuilder(self)
 
     def get_titles(self):
-        return [self.columns[item].title for item in self.columns]
+        return [self.columns[col].col_title for col in self.columns]
 
-    def get_rows(self, wheres=()):
-        self.sql = SQLBuilder(self)
-        self.sql.create_sql(wheres)
-        print(self.sql.query)
-        cur.execute(self.sql.query, (wheres[1], ))
-        return cur.fetchall()
+    @abstractmethod
+    def fetch_all(self):
+        self.sql_builder.set_fields()
+        self.sql_builder.set_from_table()
+        self.sql_builder.where_col_names = []
+
+    @abstractmethod
+    def fetch_all_by_params(self, col_names, params):
+        self.sql_builder.set_fields()
+        self.sql_builder.set_from_table()
+        self.sql_builder.add_where_col_names(col_names)
 
 
 class NamedModel(BaseModel):
@@ -32,13 +38,22 @@ class NamedModel(BaseModel):
         if col_name in self.columns.keys():
             return self.table_name + '.' + col_name
 
+    def fetch_all(self):
+        BaseModel.fetch_all(self)
+        print(self.sql_builder.get_sql())
+        cur.execute(self.sql_builder.get_sql())
+        return cur.fetchall()
+
+    def fetch_all_by_params(self, col_names, params):
+        BaseModel.fetch_all_by_params(self, col_names, params)
+        print(self.sql_builder.get_sql())
+        cur.execute(self.sql_builder.get_sql(), params)
+        return cur.fetchall()
+
 
 class RefModel(BaseModel):
     def __init__(self, table_name, title):
         super().__init__(table_name, title)
-
-    def get_titles(self):
-        return [self.columns[item].source.columns['name'].title for item in self.columns]
 
     def get_col_names(self):
         cols = self.__dict__['columns']
@@ -47,6 +62,20 @@ class RefModel(BaseModel):
     def get_tab_col(self, col_name):
         if col_name in self.columns.keys():
             return self.columns[col_name].source.table_name + '.' + self.columns[col_name].field
+
+    def fetch_all(self):
+        BaseModel.fetch_all(self)
+        self.sql_builder.add_l_joins()
+        print(self.sql_builder.get_sql())
+        cur.execute(self.sql_builder.get_sql())
+        return cur.fetchall()
+
+    def fetch_all_by_params(self, col_names, params):
+        BaseModel.fetch_all_by_params(self, col_names, params)
+        self.sql_builder.add_l_joins()
+        print(self.sql_builder.get_sql())
+        cur.execute(self.sql_builder.get_sql(), params)
+        return cur.fetchall()
 
 
 class Audiences(NamedModel):

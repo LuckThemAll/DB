@@ -30,6 +30,3 @@ class ReferenceField(BaseField):
         self.ref = ref
         self.source = source
         self.field = field
-
-    def get_col_title(self):
-        return self.source.col_title

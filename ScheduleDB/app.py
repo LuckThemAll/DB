@@ -6,49 +6,40 @@ from models import *
 
 app = Flask(__name__)
 
-tables_dict = {
-          'AUDIENCES': Audiences(),
-          'GROUPS': Groups(),
-          'LESSONS': Lessons(),
-          'LESSON_TYPES': LessonTypes(),
-          'SCHED_ITEMS': SchedItems(),
-          'SUBJECTS': Subjects(),
-          'SUBJECT_GROUP': SubjectGroup(),
-          'SUBJECT_TEACHER': SubjectTeacher(),
-          'TEACHERS': Teachers(),
-          'WEEKDAYS': WeekDays()
-         }
+tables = (
+          Audiences(),
+          Groups(),
+          Lessons(),
+          LessonTypes(),
+          SchedItems(),
+          Subjects(),
+          SubjectGroup(),
+          SubjectTeacher(),
+          Teachers(),
+          WeekDays()
+        )
 
 
+@app.route('/<int:selected_table_index>/')
 @app.route('/')
-def index():
+def index(selected_table_index=0):
     data = {}
-    data['tables'] = [tables_dict[table].title for table in tables_dict]
+    data['tables'] = tables
+    data['selected_col_name_index'] = request.args.get('search_col', 0, type=int)
+    data['search_str'] = request.args.get('search_str', '')
 
-    selected_table_index = request.args.get('tables', '')
-    search_str = request.args.get('sub_search', '')
-    selected_col_name_index = request.args.get('search_col', '')
+    if 0 <= selected_table_index < len(tables):
 
-    if selected_col_name_index == '':
-        selected_col_name_index = 0
-    if (selected_table_index.isdigit() and int(selected_table_index) >= 0 and int(selected_table_index) < len(tables_dict)):
-        selected_table = int(selected_table_index)
+        data['selected_table_index'] = selected_table_index
 
-        selected_col_name_index = int(selected_col_name_index)
-        data['search_str'] = search_str
-        data['selected_table_index'] = selected_table
-
-        tables_list = [item for item in tables_dict]
-        selected_table = tables_dict[tables_list[selected_table]]
-        cols_list = [item for item in selected_table.__dict__['columns']]
-
-        if selected_col_name_index >= cols_list.__len__():
-            selected_col_name_index = 0
-        selected_col_name = selected_table.columns[cols_list[selected_col_name_index]].get_title()
-
-        data['selected_col_name_index'] = selected_col_name_index
-        data['selected_col_name'] = selected_col_name
-        data['search_tables'] = [selected_table.columns[item].get_title() for item in selected_table.__dict__['columns']]
+        selected_table = tables[selected_table_index]
+        data['search_tables'] = [selected_table.columns[item].get_col_title() for item in selected_table.columns]
         data['headers'] = selected_table.get_titles()
-        data['records'] = selected_table.get_rows((cols_list[selected_col_name_index], search_str))
-    return render_template('back_ground.html', **data)
+
+        if data['search_str'] != '':
+            search_col_names = [item for item in selected_table.columns]
+            data['records'] = selected_table.fetch_all_by_params((search_col_names[data['selected_col_name_index']], ),
+                                                                 (data['search_str'], ))
+        else:
+            data['records'] = selected_table.fetch_all()
+        return render_template('main.html', **data)
