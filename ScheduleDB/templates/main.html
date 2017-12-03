@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <link href="static/style.css">
+</head>
+<body>
+    <div class="left_col" style="float: left; padding: 10px;">
+        <menu style="list-style: none; margin: 0; padding-left: 0">
+            {% with s = selected_table_index %}
+                {% for table in tables %}
+                    <li><a href="/{{ loop.index0 }}">{{ table.title }}</a></li>
+                {% endfor %}
+            {% endwith %}
+        </menu>
+        <form name="where_params">
+            <select name="search_col">
+                {% for table in search_tables %}
+                    <option {% if selected_col_name_index is defined and loop.index0 == selected_col_name_index %} selected {% endif %}
+                            value="{{ loop.index0 }}">{{ table }}</option>
+                {% endfor %}
+            </select>
+            <input name="search_str" type="text" {% if search_str != "" %} value="{{ search_str }}" {% endif %}>
+            <input type="submit" value="Показать">
+        </form>
+    </div>
+    <div class="right_col" style="float: left; padding: 10px;">
+         {% if selected_table_index is defined %}
+            <table border="3" width="30%">
+                <tr>
+                    {% for header in headers %}
+                        <th>
+                            {{ header }}
+                        </th>
+                    {% endfor %}
+                </tr>
+                {% for record in records %}
+                    <tr>
+                        {% for col in record %}
+                            <td>{{ col }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+    </div>
