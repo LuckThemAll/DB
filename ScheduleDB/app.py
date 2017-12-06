@@ -20,7 +20,7 @@ class SearchParameters:
 
 class Paging:
     def __init__(self, records):
-        self.recs_on_page = int(request.args.get('recs_on_page', 10))
+        self.recs_on_page = int(request.args.get('recs_on_page', 5))
         self.recs_count = len(records)
         self.pages_count = int(ceil(self.recs_count / self.recs_on_page))
         self.current_page = request.args.get('current_page', 1, type=int)
@@ -28,7 +28,7 @@ class Paging:
             self.page = 1
 
     def select_recs(self, records):
-        start = (self.current_page-1) * self.recs_on_page
+        start = (self.current_page - 1) * self.recs_on_page
         return [records[i] for i in range(start + self.recs_on_page) if start <= i < len(records)]
 
 
