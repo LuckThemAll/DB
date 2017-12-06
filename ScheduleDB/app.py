@@ -60,11 +60,7 @@ def change_arg(arg, val):
     args = request.args.copy()
     args[arg] = val
     return '{}?{}'.format(request.path, url_encode(args))
-
-
 @app.route('/<int:selected_table_index>/')
-
-
 @app.route('/')
 def index(selected_table_index=0):
     data = {}
