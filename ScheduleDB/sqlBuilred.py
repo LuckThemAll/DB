@@ -6,6 +6,7 @@ class SQLBuilder:
     l_joins = []
     where_col_names = []
     operators = []
+    sort_by_col = ''
     from_table = ''
     sql = ''
 
@@ -37,6 +38,9 @@ class SQLBuilder:
         for operator in operators:
             self.operators.append(operator)
 
+    def add_sort_by_col(self, sort_by_col):
+        self.sort_by_col = self.table.get_tab_col(sort_by_col)
+
     def get_sql(self):
         self.sql = 'select '
         if self.fields:
@@ -58,5 +62,8 @@ class SQLBuilder:
                 self.sql += '{0} {1} ? '.format(where_col_name, self.operators[i])
                 if i < self.where_col_names.__len__() - 1:
                     self.sql += 'and '
+
+        if self.sort_by_col:
+            self.sql += 'order by {0} '.format(self.sort_by_col)
 
         return self.sql
