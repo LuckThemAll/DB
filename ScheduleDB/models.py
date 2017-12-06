@@ -49,7 +49,7 @@ class NamedModel(BaseModel):
         return cur.fetchall()
 
     def fetch_all_by_params(self, col_names, params, operators, sort_by_col):
-        BaseModel.fetch_all_by_params(self, col_names, params, operators)
+        BaseModel.fetch_all_by_params(self, col_names, params, operators, sort_by_col)
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
         return cur.fetchall()
@@ -75,7 +75,7 @@ class RefModel(BaseModel):
         return cur.fetchall()
 
     def fetch_all_by_params(self, col_names, params, operators, sort_by_col):
-        BaseModel.fetch_all_by_params(self, col_names, params, operators)
+        BaseModel.fetch_all_by_params(self, col_names, params, operators, sort_by_col)
         self.sql_builder.add_l_joins()
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
