@@ -54,12 +54,12 @@ operators = {
     '<=': '<='
 }
 
-
 @app.template_global()
 def change_arg(arg, val):
     args = request.args.copy()
     args[arg] = val
     return '{}?{}'.format(request.path, url_encode(args))
+
 @app.route('/<int:selected_table_index>/')
 @app.route('/')
 def index(selected_table_index=0):
@@ -86,8 +86,8 @@ def index(selected_table_index=0):
                 data['search_data'].search_params,
                 ops,
                 sort_by_col_name)
-            data['paging'] = Paging(data['records'])
-            data['records'] = data['paging'].select_recs(data['records'])
+            p = data['paging'] = Paging(data['records'])
+            data['records'] = p.select_recs(data['records'])
 
         else:
             data['records'] = selected_table.fetch_all(sort_by_col_name)

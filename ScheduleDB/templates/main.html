@@ -2,6 +2,14 @@
 <html lang="en">
 <head>
      <link href="static/style.css">
+    <style>
+        a {
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+  </style>
 </head>
 <body>
     <div class="left_col" style="padding: 10px;">
@@ -39,18 +47,22 @@
                 {% endfor %}
             </div>
             <div style="padding: 3px">
-                <input type="submit" value="Найти">
-                <input type="submit" value="Добавить" onclick="params_count.value = {{search_data.params_count + 1}}">
-                <input type="submit" value="Удалить"
-                    onclick="{% if search_data.params_count > 1%}params_count.value = {{search_data.params_count - 1}}{%endif%}">
-                <br>
+                {% if search_data.params_count >= 1%}
+                    <input type="submit" value="Найти">
+                    <input type="submit" value="+" onclick="params_count.value = {{search_data.params_count + 1}}">
+                    <input type="submit" value="-"
+                        onclick="params_count.value = {{search_data.params_count - 1}}">
+                    <br>
+                {% else %}
+                    <input type="submit" value="+" onclick="params_count.value = {{search_data.params_count + 1}}">
+                {%endif%}
             </div>
             <div style="padding: 3px">
                 <input type="submit" value="Показать">
                 <input type="number" name="recs_on_page" min="1" max="10000" value={{ paging.recs_on_page }}>
-                <a>   Страницы: </a>
+                Страницы:
                 {% for page in range(paging.pages_count) %}
-                    <a href = {{ change_arg("current_page",  page + 1) }}>
+                    <a {% if page+1 == paging.current_page %} style="border: 1px solid black" {% endif %} href = {{ change_arg("current_page",  page + 1) }}>
                         {% if page+1 == paging.current_page %} <strong>{{ page + 1 }}</strong>
                         {% else %}{{ page + 1 }} {% endif %}</a>
                 {% endfor %}
@@ -63,7 +75,12 @@
                 <thead>
                     {% for header in headers %}
                         <th>
-                             <a href = {{ change_arg("sort_by_col", loop.index0) }}>{{ header }}</a>
+                             <a href = {{ change_arg("sort_by_col", loop.index0) }} >
+                                {% if loop.index0 == search_data.sort_by_col|int %}
+                                    <font size="4">{{ header }}</font>
+                                {% else %}
+                                    {{ header }}
+                                {% endif %}</a>
                         </th>
                     {% endfor %}
                 </thead>

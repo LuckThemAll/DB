@@ -1,5 +1,5 @@
 from db_connect import cur
-from sqlBuilred import *
+from sqlBuilder import *
 
 
 class BaseModel(metaclass=ABCMeta):
@@ -12,21 +12,21 @@ class BaseModel(metaclass=ABCMeta):
     def get_titles(self):
         return [self.columns[col].col_title for col in self.columns]
 
-    @abstractmethod
-    def fetch_all(self, sort_by_col):
+    def build_base_sql(self, sort_by_col):
+        self.sql_builder.clear_fields()
         self.sql_builder.set_fields()
         self.sql_builder.set_from_table()
         self.sql_builder.add_sort_by_col(sort_by_col)
-        self.sql_builder.where_col_names = []
-        self.sql_builder.operators = []
+
+    @abstractmethod
+    def fetch_all(self, sort_by_col):
+        self.build_base_sql(sort_by_col)
 
     @abstractmethod
     def fetch_all_by_params(self, col_names, params, operators, sort_by_col):
-        self.sql_builder.set_fields()
-        self.sql_builder.set_from_table()
+        self.build_base_sql(sort_by_col)
         self.sql_builder.add_where_col_names(col_names)
         self.sql_builder.add_operators(operators)
-        self.sql_builder.add_sort_by_col(sort_by_col)
 
 
 class NamedModel(BaseModel):
@@ -44,13 +44,11 @@ class NamedModel(BaseModel):
 
     def fetch_all(self, sort_by_col):
         BaseModel.fetch_all(self, sort_by_col)
-        print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
 
     def fetch_all_by_params(self, col_names, params, operators, sort_by_col):
         BaseModel.fetch_all_by_params(self, col_names, params, operators, sort_by_col)
-        print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
         return cur.fetchall()
 
@@ -70,14 +68,12 @@ class RefModel(BaseModel):
     def fetch_all(self, sort_by_col):
         BaseModel.fetch_all(self, sort_by_col)
         self.sql_builder.add_l_joins()
-        print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
 
     def fetch_all_by_params(self, col_names, params, operators, sort_by_col):
         BaseModel.fetch_all_by_params(self, col_names, params, operators, sort_by_col)
         self.sql_builder.add_l_joins()
-        print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
         return cur.fetchall()
 
