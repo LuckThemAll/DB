@@ -32,6 +32,11 @@ class Paging:
         return [records[i] for i in range(start + self.recs_on_page) if start <= i < len(records)]
 
 
+class TemplateData:
+    def __init__(self, tables):
+        self.tables = tables
+
+
 tables = (
           Audiences(),
           Groups(),
@@ -63,34 +68,33 @@ def change_arg(arg, val):
 @app.route('/<int:selected_table_index>/')
 @app.route('/')
 def index(selected_table_index=0):
-    data = {}
-    data['tables'] = tables
+    data = TemplateData(tables)
 
     if 0 <= selected_table_index < len(tables):
 
-        data['selected_table_index'] = selected_table_index
+        data.selected_table_index = selected_table_index
 
         selected_table = tables[selected_table_index]
-        data['search_data'] = SearchParameters(selected_table)
-        data['operators'] = [item for item in operators.keys()]
+        data.search_data = SearchParameters(selected_table)
+        data.operators = [item for item in operators.keys()]
 
-        data['search_tables'] = [selected_table.columns[item].get_col_title() for item in selected_table.columns]
-        data['headers'] = selected_table.get_titles()
+        data.search_tables = [selected_table.columns[item].get_col_title() for item in selected_table.columns]
+        data.headers = selected_table.get_titles()
 
         search_col_names = [item for item in selected_table.columns]
-        sort_by_col_name = search_col_names[int(data['search_data'].sort_by_col)]
-        if data['search_data'].search_params:
-            ops = [operators[item] for item in data['search_data'].operators]
-            data['records'] = selected_table.fetch_all_by_params(
-                [search_col_names[int(item)] for item in data['search_data'].selected_col_name_indexes],
-                data['search_data'].search_params,
+        sort_by_col_name = search_col_names[int(data.search_data.sort_by_col)]
+        if data.search_data.search_params:
+            ops = [operators[item] for item in data.search_data.operators]
+            recs = data.records = selected_table.fetch_all_by_params(
+                [search_col_names[int(item)] for item in data.search_data.selected_col_name_indexes],
+                data.search_data.search_params,
                 ops,
                 sort_by_col_name)
-            p = data['paging'] = Paging(data['records'])
-            data['records'] = p.select_recs(data['records'])
+            p = data.paging = Paging(recs)
+            data.records = p.select_recs(recs)
 
         else:
-            data['records'] = selected_table.fetch_all(sort_by_col_name)
-            data['paging'] = Paging(data['records'])
-            data['records'] = data['paging'].select_recs(data['records'])
-        return render_template('main.html', **data)
+            recs = data.records = selected_table.fetch_all(sort_by_col_name)
+            data.paging = Paging(recs)
+            data.records = data.paging.select_recs(recs)
+        return render_template('main.html', **data.__dict__)
