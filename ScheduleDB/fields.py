@@ -15,12 +15,12 @@ class BaseField(metaclass=ABCMeta):
 
 
 class IntegerField(BaseField):
-    def __init__(self, col_name=None, col_title=None, pixels=20):
+    def __init__(self, col_name, col_title, pixels=20):
         super().__init__(col_name, col_title, pixels)
 
 
 class StringField(BaseField):
-    def __init__(self, col_name=None, col_title=None, pixels=20):
+    def __init__(self, col_name, col_title, pixels=20):
         super().__init__(col_name, col_title, pixels)
 
 
