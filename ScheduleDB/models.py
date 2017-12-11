@@ -42,13 +42,21 @@ class NamedModel(BaseModel):
         if col_name in self.columns.keys():
             return self.table_name + '.' + col_name
 
+    def get_tab_col_sort(self, col_name):
+        if 'order_number' in self.columns.keys():
+            return self.get_tab_col('order_number')
+        else:
+            return self.get_tab_col(col_name)
+
     def fetch_all(self, sort_by_col):
         BaseModel.fetch_all(self, sort_by_col)
+        print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
 
     def fetch_all_by_params(self, col_names, params, operators, sort_by_col):
         BaseModel.fetch_all_by_params(self, col_names, params, operators, sort_by_col)
+        print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
         return cur.fetchall()
 
@@ -65,15 +73,23 @@ class RefModel(BaseModel):
         if col_name in self.columns.keys():
             return self.columns[col_name].source.table_name + '.' + self.columns[col_name].field
 
+    def get_tab_col_sort(self, col_name):
+        if 'order_number' in self.columns[col_name].source.columns.keys():
+            return self.columns[col_name].source.table_name + '.' + 'order_number'
+        else:
+            return self.get_tab_col(col_name)
+
     def fetch_all(self, sort_by_col):
         BaseModel.fetch_all(self, sort_by_col)
         self.sql_builder.add_l_joins()
+        print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
 
     def fetch_all_by_params(self, col_names, params, operators, sort_by_col):
         BaseModel.fetch_all_by_params(self, col_names, params, operators, sort_by_col)
         self.sql_builder.add_l_joins()
+        print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
         return cur.fetchall()
 
