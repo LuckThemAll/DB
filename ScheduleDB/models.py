@@ -3,14 +3,27 @@ from sqlBuilder import *
 
 
 class BaseModel(metaclass=ABCMeta):
-    def __init__(self, table_name=None, title=None):
+    class Columns:
+        def get_col(self, col_name):
+            return getattr(self, col_name)
+
+        def get_titles(self):
+            return [self.get_col(col).col_title for col in self.__dict__]
+
+        def get_titles_without_id(self):
+            return [self.get_col(col).col_title for col in self.__dict__ if col != 'id']
+
+        def get_col_without_id(self):
+            return [col for col in self.__dict__ if col != 'id']
+
+        def get_col_names(self, table_name):
+            return [self.get_col(col).get_col_name(table_name) for col in self.__dict__]
+
+    def __init__(self, table_name, title):
         self.table_name = table_name
         self.title = title
-        self.columns = {}
+        self.columns = self.Columns()
         self.sql_builder = SQLBuilder(self)
-
-    def get_titles(self):
-        return [self.columns[col].col_title for col in self.columns]
 
     def build_base_sql(self, sort_by_col):
         self.sql_builder.clear_fields()
@@ -30,23 +43,16 @@ class BaseModel(metaclass=ABCMeta):
 
 
 class NamedModel(BaseModel):
-    def __init__(self, table_name=None, title=None):
+    def __init__(self, table_name, title):
         super().__init__(table_name, title)
-        self.columns['id'] = IntegerField('ID', 'ID', 20)
-        self.columns['name'] = StringField('NAME', title, 200)
-
-    def get_col_names(self):
-        return [self.table_name + '.' + self.columns[a].get_col_name() for a in self.columns]
+        self.columns.id = IntegerField('ID', 'ID')
+        self.columns.name = StringField('NAME', title)
 
     def get_tab_col(self, col_name):
-        if col_name in self.columns.keys():
-            return self.table_name + '.' + col_name
+        return getattr(self.columns, col_name).get_col_name(self.table_name)
 
-    def get_tab_col_sort(self, col_name):
-        if 'order_number' in self.columns.keys():
-            return self.get_tab_col('order_number')
-        else:
-            return self.get_tab_col(col_name)
+    def get_tab_col_for_sort(self, col_name):
+        return getattr(self.columns, col_name).get_col_name(self.table_name)
 
     def fetch_all(self, sort_by_col):
         BaseModel.fetch_all(self, sort_by_col)
@@ -64,20 +70,13 @@ class NamedModel(BaseModel):
 class RefModel(BaseModel):
     def __init__(self, table_name, title):
         super().__init__(table_name, title)
+        self.columns.id = IntegerField('ID', 'ID')
 
-    def get_col_names(self):
-        cols = self.__dict__['columns']
-        return [cols[table].source.table_name + '.' + cols[table].field for table in cols]
+    def get_tab_col(self, col):
+        return self.columns.get_col(col).get_col_name(self.table_name)
 
-    def get_tab_col(self, col_name):
-        if col_name in self.columns.keys():
-            return self.columns[col_name].source.table_name + '.' + self.columns[col_name].field
-
-    def get_tab_col_sort(self, col_name):
-        if 'order_number' in self.columns[col_name].source.columns.keys():
-            return self.columns[col_name].source.table_name + '.' + 'order_number'
-        else:
-            return self.get_tab_col(col_name)
+    def get_tab_col_for_sort(self, col):
+        return self.columns.get_col(col).get_col_name(self.table_name)
 
     def fetch_all(self, sort_by_col):
         BaseModel.fetch_all(self, sort_by_col)
@@ -121,37 +120,37 @@ class Teachers(NamedModel):
 
 class Lessons(NamedModel):
     def __init__(self):
-        super().__init__('LESSONS', 'Порядок пар')
-        self.columns['order_number'] = IntegerField('ORDER_NUMBER', 'Порядок', 20)
+        super().__init__('LESSONS', 'Пары')
+        self.columns.order_number = IntegerField('ORDER_NUMBER', 'Номер пары')
 
 
 class WeekDays(NamedModel):
     def __init__(self):
         super().__init__('WEEKDAYS', 'Дни недели')
-        self.columns['order_number'] = IntegerField('ORDER_NUMBER', 'Порядок', 20)
+        self.columns.order_number = IntegerField('ORDER_NUMBER', 'Порядок')
 
 
 class SubjectGroup(RefModel):
     def __init__(self):
         super().__init__('SUBJECT_GROUP', 'Учебный план')
-        self.columns['subject_id'] = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
-        self.columns['group_id'] = ReferenceField('GROUP_ID', 'Группа', 'ID', Groups(), 'NAME')
+        self.columns.subject_id = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
+        self.columns.group_id = ReferenceField('GROUP_ID', 'Группа', 'ID', Groups(), 'NAME')
 
 
 class SubjectTeacher(RefModel):
     def __init__(self):
         super().__init__('SUBJECT_TEACHER', 'Нагрузка учителей')
-        self.columns['subject_id'] = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
-        self.columns['teacher_id'] = ReferenceField('TEACHER_ID', 'ФИО преподавателя', 'ID', Teachers(), 'NAME')
+        self.columns.subject_id = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
+        self.columns.teacher_id = ReferenceField('TEACHER_ID', 'ФИО преподавателя', 'ID', Teachers(), 'NAME')
 
 
 class SchedItems(RefModel):
     def __init__(self):
         super().__init__('SCHED_ITEMS', 'Расписание')
-        self.columns['lesson_id'] = ReferenceField('LESSON_ID', 'Номер пары', 'ID', Lessons(), 'NAME')
-        self.columns['subject_id'] = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
-        self.columns['audience_id'] = ReferenceField('AUDIENCES_ID', 'Номер аудитории', 'ID', Audiences(), 'NAME')
-        self.columns['group_id'] = ReferenceField('GROUP_ID', 'Группа', 'ID', Groups(), 'NAME')
-        self.columns['teacher_id'] = ReferenceField('TEACHER_ID', 'ФИО преподавателя', 'ID', Teachers(), 'NAME')
-        self.columns['type_id'] = ReferenceField('TYPE_ID', 'Тип пары', 'ID', LessonTypes(), 'NAME')
-        self.columns['weekday_id'] = ReferenceField('WEEKDAY_ID', 'День недели', 'ID', WeekDays(), 'NAME')
+        self.columns.lesson_id = ReferenceField('LESSON_ID', 'Номер пары', 'ID', Lessons(), 'NAME')
+        self.columns.subject_id = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
+        self.columns.audience_id = ReferenceField('AUDIENCES_ID', 'Номер аудитории', 'ID', Audiences(), 'NAME')
+        self.columns.group_id = ReferenceField('GROUP_ID', 'Группа', 'ID', Groups(), 'NAME')
+        self.columns.teacher_id = ReferenceField('TEACHER_ID', 'ФИО преподавателя', 'ID', Teachers(), 'NAME')
+        self.columns.type_id = ReferenceField('TYPE_ID', 'Тип пары', 'ID', LessonTypes(), 'NAME')
+        self.columns.weekday_id = ReferenceField('WEEKDAY_ID', 'День недели', 'ID', WeekDays(), 'NAME')

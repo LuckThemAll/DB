@@ -23,15 +23,18 @@ class SQLBuilder:
         self.from_table = ''
         self.sql = ''
 
-    def set_fields(self):
-        [self.fields.append(col) for col in self.table.get_col_names()]
+    def set_fields(self, name_only=False):
+        if not name_only:
+            [self.fields.append(col) for col in self.table.columns.get_col_names(self.table_name)]
+        else:
+            self.fields.append(self.table.columns.get_col('name').get_col_name(self.table_name))
 
     def set_from_table(self):
         self.from_table = 'from ' + self.table_name + ' '
 
     def add_l_joins(self):
         [self.l_joins.append((val.source.table_name, val.ref, self.table_name, key))
-            for key, val in self.table.columns.items()
+            for key, val in self.table.columns.__dict__.items()
             if isinstance(val, ReferenceField)
          ]
 
@@ -64,3 +67,7 @@ class SQLBuilder:
             self.sql += 'order by {0} '.format(self.sort_by_col)
 
         return self.sql
+
+    def set_insert(self, fields):
+        sql = 'INSERT INTO {0}({1}) VALUES ({2});'.format(self.table_name, ','.join(fields), ','.join('?'*len(fields)))
+        return sql
