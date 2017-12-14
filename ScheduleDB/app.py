@@ -59,16 +59,23 @@ operators = {
     '<=': '<='
 }
 
+
 @app.template_global()
 def change_arg(arg, val):
     args = request.args.copy()
     args[arg] = val
     return '{}?{}'.format(request.path, url_encode(args))
 
-@app.route('/<int:selected_table_index>/')
+
 @app.route('/')
+def index():
+    data = TemplateData()
+    return render_template('start_page.html', **data.__dict__)
+
+
+@app.route('/<int:selected_table_index>/')
 def index(selected_table_index=0):
-    data = TemplateData(tables)
+    data = TemplateData()
 
     if 0 <= selected_table_index < len(tables):
 
@@ -77,11 +84,11 @@ def index(selected_table_index=0):
         selected_table = tables[selected_table_index]
         data.search_data = SearchParameters(selected_table)
         data.operators = [item for item in operators.keys()]
+        print(selected_table.columns)
+        data.search_tables = [selected_table.columns.get_col(item).get_col_title() for item in selected_table.columns.__dict__]
+        data.headers = selected_table.columns.get_titles()
 
-        data.search_tables = [selected_table.columns[item].get_col_title() for item in selected_table.columns]
-        data.headers = selected_table.get_titles()
-
-        search_col_names = [item for item in selected_table.columns]
+        search_col_names = [item for item in selected_table.columns.__dict__]
         sort_by_col_name = search_col_names[int(data.search_data.sort_by_col)]
         if data.search_data.search_params:
             ops = [operators[item] for item in data.search_data.operators]

@@ -1,81 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-     <link href="static/style.css">
-    <style>
-        a {
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-  </style>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="left_col" style="padding: 10px;">
-        <menu style="list-style: none; margin: 0; padding-left: 0">
-            {% with s = selected_table_index %}
-                {% for table in tables %}
-                    <li><a href="/{{ loop.index0 }}">{{ table.title }}</a></li>
-                {% endfor %}
-            {% endwith %}
-        </menu>
-        <form name="where_params">
-            <input type="hidden" name="params_count" value="{{search_data.params_count}}">
-            <input type="hidden" name="sort_by_col" value="{{search_data.sort_by_col}}">
-            <input type="hidden" name="page" value="{{paging.current_page}}">
-            <div id="params_fields">
-                {% for i in range(search_data.params_count)%}
-                    <div id="params_field" style="padding: 3px">
-                        <select name="search_col">
-                            {% for search_col_name in search_data.search_col_names %}
-                                <option {% if search_data.selected_col_name_indexes[i] is defined and
-                                        search_data.selected_col_name_indexes[i]|int == loop.index0 %}
-                                            selected
-                                        {% endif %}
-                                        value="{{ loop.index0 }}"
-                                >{{ search_col_name }}</option>
-                            {% endfor %}
-                        </select>
-                        <select name="operator">
-                            {% for operator in operators %}
-                                <option {% if search_data.operators[i] == operator %} selected {% endif %}>{{ operator }}</option>
-                            {% endfor %}
-                        </select>
-                        <input name="search_param" type="text" value="{{ search_data.search_params[i] }}" />
-                    </div>
-                {% endfor %}
-            </div>
-            <div style="padding: 3px">
-                {% if search_data.params_count >= 1%}
-                    <input type="submit" value="Найти">
-                    <input type="submit" value="+" onclick="params_count.value = {{search_data.params_count + 1}}">
-                    <input type="submit" value="-"
-                        onclick="params_count.value = {{search_data.params_count - 1}}">
-                    <br>
-                {% else %}
-                    <input type="submit" value="+" onclick="params_count.value = {{search_data.params_count + 1}}">
-                {%endif%}
-            </div>
-            <div style="padding: 3px">
-                <input type="submit" value="Показать">
-                <input type="number" name="recs_on_page" min="1" max="10000" value={{ paging.recs_on_page }}>
-                Страницы:
-                {% for page in range(paging.pages_count) %}
-                    <a {% if page+1 == paging.current_page %} style="border: 1px solid black" {% endif %} href = {{ change_arg("current_page",  page + 1) }}>
-                        {% if page+1 == paging.current_page %} <strong>{{ page + 1 }}</strong>
-                        {% else %}{{ page + 1 }} {% endif %}</a>
-                {% endfor %}
-            </div>
+    <menu class="top_menu">
+        {% for table in tables %}
+            <li><a href="/{{ loop.index0 }}">{{ table.title }}</a></li>
+        {% endfor %}
+    </menu>
+    <form name="where_params">
+        <input type="hidden" name="params_count" value="{{search_data.params_count}}">
+        <input type="hidden" name="sort_by_col" value="{{search_data.sort_by_col}}">
+        <input type="hidden" name="page" value="{{paging.current_page}}">
+        <input type="hidden" name="sort_type" value="{{search_data.sort_type}}">
+        <div id="params_fields">
+            {% for i in range(search_data.params_count)%}
+                <div id="params_field" style="padding: 3px">
+                    <select name="search_col">
+                        {% for search_col_name in search_data.search_col_names %}
+                            <option {% if search_data.selected_col_name_indexes[i] is defined and
+                                    search_data.selected_col_name_indexes[i]|int == loop.index0 %}
+                                        selected
+                                    {% endif %}
+                                    value="{{ loop.index0 }}"
+                            >{{ search_col_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="operator">
+                        {% for operator in operators %}
+                            <option {% if search_data.operators[i] == operator %} selected {% endif %}>{{ operator }}</option>
+                        {% endfor %}
+                    </select>
+                    <input name="search_param" type="text" value="{{ search_data.search_params[i] }}" />
+                </div>
+            {% endfor %}
+        </div>
+        <div style="padding: 3px">
+            {% if search_data.params_count >= 1%}
+            <input type="submit" value="Найти">
+            <input type="submit" value="+" onclick="params_count.value = {{search_data.params_count + 1}}">
+            <input type="submit" value="-"
+                    onclick="params_count.value = {{search_data.params_count - 1}}">
+            <br>
+            {% else %}
+            <input type="submit" value="+" onclick="params_count.value = {{search_data.params_count + 1}}">
+            {%endif%}
+        </div>
+        <div style="padding: 3px">
+            <input type="submit" value="Показать">
+            <input type="number" name="recs_on_page" min="1" max="10000" value={{ paging.recs_on_page }}>
+            Страницы:
+            {% for page in range(paging.pages_count) %}
+                <a {% if page+1 == paging.current_page %} style="border: 1px solid black" {% endif %}
+                    href = {{ change_arg("current_page",  page + 1) }}>
+                    {% if page+1 == paging.current_page %}
+                        <strong>{{ page + 1 }}</strong>
+                    {% else %}
+                        {{ page + 1 }}
+                    {% endif %}</a>
+            {% endfor %}<br>
+            <input type="button" onclick="window.open('./add')" value="Добавить запись" >
+        </div>
         </form>
-    </div>
     <div class="right_col" style="float: left; padding: 10px;">
          {% if selected_table_index is defined %}
             <table border="3" width="30%">
                 <thead>
                     {% for header in headers %}
                         <th>
-                             <a href = {{ change_arg("sort_by_col", loop.index0) }} >
+                             <a href = {{ change_arg("sort_by_col", loop.index0)}}>
                                 {% if loop.index0 == search_data.sort_by_col|int %}
                                     <font size="4">{{ header }}</font>
                                 {% else %}
@@ -94,3 +89,4 @@
             </table>
         {% endif %}
     </div>
+</body>

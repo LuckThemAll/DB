@@ -45,7 +45,7 @@ class SQLBuilder:
         [self.operators.append(operator) for operator in operators]
 
     def add_sort_by_col(self, sort_by_col):
-        self.sort_by_col = self.table.get_tab_col_sort(sort_by_col)
+        self.sort_by_col = self.table.get_tab_col_for_sort(sort_by_col)
 
     def get_sql(self):
         self.sql = 'select ' + ','.join(self.fields) + ' '
