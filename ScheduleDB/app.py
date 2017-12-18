@@ -84,7 +84,6 @@ def index(selected_table_index=0):
         selected_table = tables[selected_table_index]
         data.search_data = SearchParameters(selected_table)
         data.operators = [item for item in operators.keys()]
-        print(selected_table.columns)
         data.search_tables = [selected_table.columns.get_col(item).get_col_title() for item in selected_table.columns.__dict__]
         data.headers = selected_table.columns.get_titles()
 
@@ -109,178 +108,139 @@ def index(selected_table_index=0):
 
 @app.route('/<int:selected_table_index>/add')
 def add_record(selected_table_index=0):
+    def set_options():
+        data.options = {}
+        for key, val in selected_table.columns.__dict__.items():
+            if isinstance(val, ReferenceField):
+                sql = SQLBuilder(selected_table.columns.get_col(key).source)
+                sql.clear_fields()
+                sql.set_fields('name')
+                sql.set_from_table()
+                sql.add_l_joins()
+                cur.execute(sql.get_sql())
+                data.options[key] = cur.fetchall()
+            elif key != 'id':
+                data.options[key] = 'none'
+
+    def refs_to_source_id(fields):
+        if is_correct_fields(fields):
+            for i, col in enumerate(selected_table.columns.get_cols_without_id()):
+                if isinstance(selected_table.columns.get_col(col), ReferenceField):
+                    sql = SQLBuilder(selected_table.columns.get_col(col).source)
+                    sql.clear_fields()
+                    sql.set_fields('id')
+                    sql.set_from_table()
+                    sql.add_where_col_names('name')
+                    sql.add_operators('=')
+                    cur.execute(sql.get_sql(), get_list(fields[i]))
+                    fields[i] = int(cur.fetchall()[0][0])
+        return fields
+
     data = TemplateData()
-    data.selected_table_index = selected_table_index
     selected_table = tables[selected_table_index]
     data.titles = selected_table.columns.get_titles_without_id()
-    data.options = {}
-    for key, val in selected_table.columns.__dict__.items():
-        if isinstance(val, ReferenceField):
-            sql = SQLBuilder(selected_table.columns.get_col(key).source)
-            sql.clear_fields()
-            sql.set_fields('name')
-            sql.set_from_table()
-            sql.add_l_joins()
-            cur.execute(sql.get_sql())
-            data.options[key] = cur.fetchall()
-        elif key != 'id':
-            data.options[key] = 'none'
-    all_fields_correct = True
-    params = request.args.getlist("p")
-    for item in request.args.getlist("p"):
-        if not item:
-            all_fields_correct = False
-            break
+    set_options()
+    new_values = params = request.args.getlist("p")
+    params = refs_to_source_id(params)
 
-    if len(params) != 0:
-        for i, col in enumerate(selected_table.columns.get_cols_without_id()):
-            if isinstance(selected_table.columns.get_col(col), ReferenceField):
-                print(selected_table.columns.get_col(col))
-                atr_name = selected_table.columns.get_col(col).get_col_name(selected_table.table_name)
-                atr_table = selected_table.columns.get_col(col).get_source_table()
-                idd = selected_table.columns.get_col(col).get_source_col_id()
-                sql = 'select {2} from {1} where {0}=?'.format(atr_name, atr_table, idd)
-                cur.execute(sql, (params[i],))
-                params[i] = int(cur.fetchall()[0][0])
-
-    if all_fields_correct and len(params) != 0:
+    if is_correct_fields(new_values):
         sql = SQLBuilder(selected_table)
+        print(sql.set_insert(selected_table.columns.get_cols_without_id()), params)
         cur.execute(sql.set_insert(selected_table.columns.get_cols_without_id()), params)
     return render_template('add.html', **data.__dict__)
 
 
 @app.route('/<int:selected_table_index>/modify/<int:rec_id>')
 def modify(selected_table_index=0, rec_id=0):
-    print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
     data = TemplateData()
     data.id = rec_id
-    data.selected_table_index = selected_table_index
     selected_table = tables[selected_table_index]
     data.titles = selected_table.columns.get_titles_without_id()
     data.current_values = {}
 
-    data.options = {}
-    for key, val in selected_table.columns.__dict__.items():
-        if isinstance(val, ReferenceField):
-            sql = SQLBuilder(selected_table.columns.get_col(key).source)
-            sql.clear_fields()
-            sql.set_fields('name')
-            sql.set_from_table()
-            sql.add_l_joins()
-            cur.execute(sql.get_sql())
-            data.options[key] = cur.fetchall()
-        elif key != 'id':
-            sqll = 'select {0}.{1} from {0} where {0}.id = ?'.format(selected_table.table_name, 'name')
-            cur.execute(sqll, get_list(rec_id))
-            data.options[key] = 'none'
-    print('options----------', data.options)
+    def set_options():
+        data.options = {}
+        for key, val in selected_table.columns.__dict__.items():
+            if isinstance(val, ReferenceField):
+                sql = SQLBuilder(selected_table.columns.get_col(key).source)
+                sql.clear_fields()
+                sql.set_fields('name')
+                sql.set_from_table()
+                sql.add_l_joins()
+                cur.execute(sql.get_sql())
+                data.options[key] = cur.fetchall()
+            elif key != 'id':
+                sql = SQLBuilder(selected_table)
+                sql.clear_fields()
+                sql.set_from_table()
+                sql.set_fields('name')
+                sql.add_where_col_names('id')
+                sql.add_operators('=')
+                print(sql.get_sql(), get_list(rec_id))
+                cur.execute(sql.get_sql(), get_list(rec_id))
+                data.options[key] = 'none'
 
-    # Сохранение текущих значений
-    for key, val in selected_table.columns.__dict__.items():
-        if isinstance(val, ReferenceField):
-            sql = SQLBuilder(selected_table.columns.get_col(key).source)
-            select_col_id = 'select {0}.{1} from {0} where {0}.id = ?'.format(selected_table.table_name,
-                                                                              selected_table.columns.get_col(key).col_name)
-            cur.execute(select_col_id, get_list(data.id))
-            col_id = cur.fetchone()
-            sql.clear_fields()
-            sql.set_fields('name')
-            sql.set_from_table()
-            sql.add_l_joins()
-            sql.add_where_col_names('id')
-            sql.add_operators('=')
-            print(sql.get_sql(), get_list(col_id))
-            cur.execute(sql.get_sql(), col_id)
-            col_name = cur.fetchall()
-            print(col_name)
-            if len(col_name) > 0:
-                data.current_values[key] = col_name
-            else:
-                data.current_values[key] = 'none'
-        elif key != 'id':
-            sql = SQLBuilder(selected_table)
-            sql.clear_fields()
-            sql.set_fields(key)
-            sql.set_from_table()
-            sql.add_where_col_names('id')
-            sql.add_operators('=')
-            cur.execute(sql.get_sql(), (data.id,))
-            data.current_values[key] = cur.fetchall()
-    print('current_values----------', data.current_values)
+    def save_current_values():
+        for key, val in selected_table.columns.__dict__.items():
+            if isinstance(val, ReferenceField):
+                sql = SQLBuilder(selected_table)
+                sql.clear_fields()
+                sql.set_fields(key, name=False)
+                sql.set_from_table()
+                sql.add_where_col_names('id')
+                sql.add_operators('=')
+                print(get_list(data.id), sql.get_sql())
+                cur.execute(sql.get_sql(), get_list(data.id))
+                col_id = cur.fetchone()
 
-    all_fields_correct = True
-    params = request.args.getlist("p")
-    for item in request.args.getlist("p"):
-        if not item:
-            all_fields_correct = False
-            break
-    print('params----------', params)
-    mem = []
-    if len(params) != 0:
-        for i, col in enumerate(selected_table.columns.get_cols_without_id()):
-            if isinstance(col, ReferenceField):
-                print(selected_table.columns.get_col(col).get_col_name(selected_table.table_name))
-                atr_name = selected_table.columns.get_col(col).get_col_name(selected_table.table_name)
+                sql = SQLBuilder(selected_table.columns.get_col(key).source)
+                sql.clear_fields()
+                sql.set_fields('name')
+                sql.set_from_table()
+                sql.add_l_joins()
+                sql.add_where_col_names('id')
+                sql.add_operators('=')
+                cur.execute(sql.get_sql(), col_id)
+                col_name = cur.fetchall()
+                data.current_values[key] = col_name if len(col_name) > 0 else 'none'
+
+            elif key != 'id':
+                sql = SQLBuilder(selected_table)
+                sql.clear_fields()
+                sql.set_fields(key)
+                sql.set_from_table()
+                sql.add_where_col_names('id')
+                sql.add_operators('=')
+                cur.execute(sql.get_sql(), (data.id,))
+                data.current_values[key] = cur.fetchall()
+
+    def refs_to_source_id():
+        if is_correct_fields(params):
+            for i, col in enumerate(selected_table.columns.get_cols_without_id()):
                 if isinstance(selected_table.columns.get_col(col), ReferenceField):
-                    atr_table = selected_table.columns.get_col(col).get_source_table()
-                    idd = selected_table.columns.get_col(col).get_source_col_id()
-                else:
-                    atr_table = selected_table.table_name
-                    idd = rec_id
-                sql = 'select {2} from {1} where {0}=?'.format(atr_name, atr_table, idd)
-                print(sql)
-                cur.execute(sql, (params[i],))
-                mem.append(cur.fetchall()[0][0])
+                    sql = SQLBuilder(selected_table.columns.get_col(col).source)
+                    sql.clear_fields()
+                    sql.set_fields('id')
+                    sql.set_from_table()
+                    sql.add_where_col_names('name')
+                    sql.add_operators('=')
 
-    if all_fields_correct and len(params) != 0:
+                    cur.execute(sql.get_sql(), (params[i],))
+                    params[i] = cur.fetchall()[0][0]
+
+    set_options()
+    save_current_values()
+
+    params = request.args.getlist("p")
+    refs_to_source_id()
+
+    if is_correct_fields(params):
         sql = SQLBuilder(selected_table)
         cols = selected_table.columns.get_cols_without_id()
-        print(cols, mem)
-        mem.append(rec_id)
         params.append(rec_id)
         print(sql.set_update(cols), params)
-        if len(mem) != 1:
-            print('111111111111111111111', mem, len(mem))
-            cur.execute(sql.set_update(cols), mem)
-        else:
-            print('222222222222222222222')
-            cur.execute(sql.set_update(cols), params)
-
-
+        cur.execute(sql.set_update(cols), params)
 
     cur.transaction.commit()
-
-    # Сохранение текущих значений
-    for key, val in selected_table.columns.__dict__.items():
-        if isinstance(val, ReferenceField):
-            sql = SQLBuilder(selected_table.columns.get_col(key).source)
-            select_col_id = 'select {0}.{1} from {0} where {0}.id = ?'.format(selected_table.table_name,
-                                                                              selected_table.columns.get_col(
-                                                                                  key).col_name)
-            cur.execute(select_col_id, get_list(data.id))
-            col_id = cur.fetchone()
-            sql.clear_fields()
-            sql.set_fields('name')
-            sql.set_from_table()
-            sql.add_l_joins()
-            sql.add_where_col_names('id')
-            sql.add_operators('=')
-            print(sql.get_sql(), get_list(col_id))
-            cur.execute(sql.get_sql(), col_id)
-            col_name = cur.fetchall()
-            print(col_name)
-            if len(col_name) > 0:
-                data.current_values[key] = col_name
-            else:
-                data.current_values[key] = 'none'
-        elif key != 'id':
-            sql = SQLBuilder(selected_table)
-            sql.clear_fields()
-            sql.set_fields(key)
-            sql.set_from_table()
-            sql.add_where_col_names('id')
-            sql.add_operators('=')
-            cur.execute(sql.get_sql(), (data.id,))
-            data.current_values[key] = cur.fetchall()
-
+    save_current_values()
     return render_template('modify.html', **data.__dict__)

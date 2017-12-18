@@ -33,8 +33,8 @@ class ReferenceField(BaseField):
     def get_col_name(self, table_name):
         return self.source.table_name + '.' + self.field
 
-    def get_source_col_id(self):
+    def get_source_id(self):
         return self.source.table_name + '.' + 'id'
 
-    def get_source_table(self):
+    def get_source_table_name(self):
         return self.source.table_name

@@ -24,13 +24,14 @@ class SQLBuilder:
         self.from_table = ''
         self.sql = ''
 
-    def set_fields(self, *fields):
+    def set_fields(self, *fields, name=True):
         if not fields:
             [self.fields.append(col) for col in self.table.columns.get_col_names(self.table_name)]
         else:
-            [self.fields.append(self.table.columns.get_col(field).get_col_name(self.table_name)) for field in fields]
-            '''[self.fields.append(col) for col in self.table.columns.get_col()]
-            self.fields.append(self.table.columns.get_col('name').get_col_name(self.table_name))'''
+            if name:
+                [self.fields.append(self.table.columns.get_col(field).get_col_name(self.table_name)) for field in fields]
+            else:
+                [self.fields.append(self.table_name + '.' + field) for field in fields]
 
     def set_from_table(self):
         self.from_table = 'from ' + self.table_name + ' '
