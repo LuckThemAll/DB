@@ -13,7 +13,7 @@ class BaseModel(metaclass=ABCMeta):
         def get_titles_without_id(self):
             return [self.get_col(col).col_title for col in self.__dict__ if col != 'id']
 
-        def get_col_without_id(self):
+        def get_cols_without_id(self):
             return [col for col in self.__dict__ if col != 'id']
 
         def get_col_names(self, table_name):
@@ -149,7 +149,7 @@ class SchedItems(RefModel):
         super().__init__('SCHED_ITEMS', 'Расписание')
         self.columns.lesson_id = ReferenceField('LESSON_ID', 'Номер пары', 'ID', Lessons(), 'NAME')
         self.columns.subject_id = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
-        self.columns.audience_id = ReferenceField('AUDIENCES_ID', 'Номер аудитории', 'ID', Audiences(), 'NAME')
+        self.columns.audience_id = ReferenceField('AUDIENCE_ID', 'Номер аудитории', 'ID', Audiences(), 'NAME')
         self.columns.group_id = ReferenceField('GROUP_ID', 'Группа', 'ID', Groups(), 'NAME')
         self.columns.teacher_id = ReferenceField('TEACHER_ID', 'ФИО преподавателя', 'ID', Teachers(), 'NAME')
         self.columns.type_id = ReferenceField('TYPE_ID', 'Тип пары', 'ID', LessonTypes(), 'NAME')

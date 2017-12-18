@@ -1,4 +1,5 @@
 from fields import *
+from misc import *
 
 
 class SQLBuilder:
@@ -23,11 +24,13 @@ class SQLBuilder:
         self.from_table = ''
         self.sql = ''
 
-    def set_fields(self, name_only=False):
-        if not name_only:
+    def set_fields(self, *fields):
+        if not fields:
             [self.fields.append(col) for col in self.table.columns.get_col_names(self.table_name)]
         else:
-            self.fields.append(self.table.columns.get_col('name').get_col_name(self.table_name))
+            [self.fields.append(self.table.columns.get_col(field).get_col_name(self.table_name)) for field in fields]
+            '''[self.fields.append(col) for col in self.table.columns.get_col()]
+            self.fields.append(self.table.columns.get_col('name').get_col_name(self.table_name))'''
 
     def set_from_table(self):
         self.from_table = 'from ' + self.table_name + ' '
@@ -39,9 +42,11 @@ class SQLBuilder:
          ]
 
     def add_where_col_names(self, col_names):
+        col_names = get_list(col_names)
         [self.where_col_names.append(self.table.get_tab_col(col_name)) for col_name in col_names]
 
     def add_operators(self, operators):
+        operators = get_list(operators)
         [self.operators.append(operator) for operator in operators]
 
     def add_sort_by_col(self, sort_by_col):
@@ -70,4 +75,11 @@ class SQLBuilder:
 
     def set_insert(self, fields):
         sql = 'INSERT INTO {0}({1}) VALUES ({2});'.format(self.table_name, ','.join(fields), ','.join('?'*len(fields)))
+        return sql
+
+    def set_update(self, cols):
+        updated_cols = []
+        for i, col in enumerate(cols):
+            updated_cols.append(col + '=' + '? ')
+        sql = 'UPDATE {0} SET {1} WHERE {0}.ID=?'.format(self.table_name, ','.join(updated_cols))
         return sql
