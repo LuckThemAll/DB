@@ -74,13 +74,17 @@ class SQLBuilder:
 
         return self.sql
 
-    def set_insert(self, fields):
+    def get_insert(self, fields):
         sql = 'INSERT INTO {0}({1}) VALUES ({2});'.format(self.table_name, ','.join(fields), ','.join('?'*len(fields)))
         return sql
 
-    def set_update(self, cols):
+    def get_update(self, cols):
         updated_cols = []
         for i, col in enumerate(cols):
             updated_cols.append(col + '=' + '? ')
         sql = 'UPDATE {0} SET {1} WHERE {0}.ID=?'.format(self.table_name, ','.join(updated_cols))
+        return sql
+
+    def get_delete(self):
+        sql = 'DELETE FROM {0} WHERE {0}.ID = ?'.format(self.table_name)
         return sql

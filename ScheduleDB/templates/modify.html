@@ -19,6 +19,7 @@
                         <input name="p" type="text" value="{{ current_values[option][0][0] }}">
                     {% else  %}
                         <select style="width: 130px" name="p">
+                            <option {% if current_values[option] == 'none' %} selected {% endif %} name="p"></option>
                             {% for item in options[option] %}
                                 <option {% if item == current_values[option][0] %} selected {% endif %} name="p">{{ item[0] }}</option>
                             {% endfor %}
@@ -28,7 +29,8 @@
             {% endfor %}
             </tr>
         </table>
-    <input type="submit" value="Сохранить и продолжить">
+        <input type="submit" value="Сохранить и продолжить">
+        <input type="submit" value="Закрыть" onclick="window.close()">
     </form>
  </body>
 </html>

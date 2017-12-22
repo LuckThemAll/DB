@@ -13,7 +13,7 @@
     <form name="where_params">
         <input type="hidden" name="params_count" value="{{search_data.params_count}}">
         <input type="hidden" name="sort_by_col" value="{{search_data.sort_by_col}}">
-        <input type="hidden" name="page" value="{{paging.current_page}}">
+        <input type="hidden" name="current_page" value="{{paging.current_page}}">
         <input type="hidden" name="sort_type" value="{{search_data.sort_type}}">
         <div id="params_fields">
             {% for i in range(search_data.params_count)%}
@@ -82,12 +82,14 @@
                 {% for record in records %}
                     <tr>
                         {% for col in record %}
-                            <td>{{ col }}</td>
+                            <td>{% if col == None %} {% else %} {{ col }} {% endif%} </td>
                         {% endfor %}
-                        <td><a target="_blank" href = "./modify/{{ record[0] }}">Редактировать</a></td>
+                        <td><a target="_blank" href = "./modify/{{ record[0] }}">Редактировать</a><br>
+                        <button type="submit" name="delid" value="{{record[0]}}">Удалить</button></td>
                     </tr>
                 {% endfor %}
             </table>
+        </form>
         {% endif %}
     </div>
 </body>

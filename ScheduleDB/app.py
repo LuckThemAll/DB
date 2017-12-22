@@ -77,12 +77,16 @@ def start():
 @app.route('/<int:selected_table_index>/')
 def index(selected_table_index=0):
     data = TemplateData()
-
     if 0 <= selected_table_index < len(tables):
 
         data.selected_table_index = selected_table_index
 
         selected_table = tables[selected_table_index]
+        data.delId = request.args.get('delid', -1, type=int)
+        if data.delId != -1:
+            sql = SQLBuilder(selected_table)
+            try: cur.execute(sql.get_delete(), get_list(data.delId))
+            except: data.delId = -1
         data.search_data = SearchParameters(selected_table)
         data.operators = [item for item in operators.keys()]
         data.search_tables = [selected_table.columns.get_col(item).get_col_title() for item in selected_table.columns.__dict__]
@@ -219,13 +223,15 @@ def modify(selected_table_index=0, rec_id=0):
         if is_correct_fields(params):
             for i, col in enumerate(selected_table.columns.get_cols_without_id()):
                 if isinstance(selected_table.columns.get_col(col), ReferenceField):
+                    if params[i] == '':
+                        params[i] = None
+                        continue
                     sql = SQLBuilder(selected_table.columns.get_col(col).source)
                     sql.clear_fields()
                     sql.set_fields('id')
                     sql.set_from_table()
                     sql.add_where_col_names('name')
                     sql.add_operators('=')
-
                     cur.execute(sql.get_sql(), (params[i],))
                     params[i] = cur.fetchall()[0][0]
 
