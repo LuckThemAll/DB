@@ -7,6 +7,7 @@ class SQLBuilder:
     l_joins = []
     where_col_names = []
     operators = []
+    logic_operator = ''
     sort_by_col = ''
     from_table = ''
     sql = ''
@@ -23,6 +24,7 @@ class SQLBuilder:
         self.sort_by_col = ''
         self.from_table = ''
         self.sql = ''
+        self.logic_operator = ''
 
     def set_fields(self, *fields, name=True):
         if not fields:
@@ -67,7 +69,7 @@ class SQLBuilder:
             for i, where_col_name in enumerate(self.where_col_names):
                 self.sql += '{0} {1} ? '.format(where_col_name, self.operators[i])
                 if i < self.where_col_names.__len__() - 1:
-                    self.sql += 'and '
+                    self.sql += self.logic_operator + ' '
 
         if self.sort_by_col:
             self.sql += 'order by {0} '.format(self.sort_by_col)
@@ -88,3 +90,6 @@ class SQLBuilder:
     def get_delete(self):
         sql = 'DELETE FROM {0} WHERE {0}.ID = ?'.format(self.table_name)
         return sql
+
+    def add_logic_operator(self, logic_operator):
+        self.logic_operator = logic_operator

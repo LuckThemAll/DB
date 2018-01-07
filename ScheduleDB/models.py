@@ -36,10 +36,11 @@ class BaseModel(metaclass=ABCMeta):
         self.build_base_sql(sort_by_col)
 
     @abstractmethod
-    def fetch_all_by_params(self, col_names, params, operators, sort_by_col):
+    def fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col):
         self.build_base_sql(sort_by_col)
         self.sql_builder.add_where_col_names(col_names)
         self.sql_builder.add_operators(operators)
+        self.sql_builder.add_logic_operator(logic_operator)
 
 
 class NamedModel(BaseModel):
@@ -60,8 +61,8 @@ class NamedModel(BaseModel):
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
 
-    def fetch_all_by_params(self, col_names, params, operators, sort_by_col):
-        BaseModel.fetch_all_by_params(self, col_names, params, operators, sort_by_col)
+    def fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col):
+        BaseModel.fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col)
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
         return cur.fetchall()
@@ -78,15 +79,15 @@ class RefModel(BaseModel):
     def get_tab_col_for_sort(self, col):
         return self.columns.get_col(col).get_col_name(self.table_name)
 
-    def fetch_all(self, sort_by_col):
+    def fetch_all(self, sort_by_col='id'):
         BaseModel.fetch_all(self, sort_by_col)
         self.sql_builder.add_l_joins()
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
 
-    def fetch_all_by_params(self, col_names, params, operators, sort_by_col):
-        BaseModel.fetch_all_by_params(self, col_names, params, operators, sort_by_col)
+    def fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col):
+        BaseModel.fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col)
         self.sql_builder.add_l_joins()
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)

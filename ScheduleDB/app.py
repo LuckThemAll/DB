@@ -16,6 +16,7 @@ class SearchParameters:
         self.search_params = request.args.getlist('search_param')
         self.operators = request.args.getlist('operator')
         self.sort_by_col = request.args.get('sort_by_col', 0)
+        self.logic_operator = request.args.get('lo', 'and')
 
 
 class Paging:
@@ -60,6 +61,8 @@ operators = {
     '<=': '<='
 }
 
+logic_operators = ('AND', 'OR')
+
 
 @app.template_global()
 def change_arg(arg, val):
@@ -87,6 +90,7 @@ def index(selected_table_index=0):
             sql = SQLBuilder(selected_table)
             try: cur.execute(sql.get_delete(), get_list(data.delId))
             except: data.delId = -1
+        data.logic_operators = logic_operators
         data.search_data = SearchParameters(selected_table)
         data.operators = [item for item in operators.keys()]
         data.search_tables = [selected_table.columns.get_col(item).get_col_title() for item in selected_table.columns.__dict__]
@@ -100,6 +104,7 @@ def index(selected_table_index=0):
                 [search_col_names[int(item)] for item in data.search_data.selected_col_name_indexes],
                 data.search_data.search_params,
                 ops,
+                data.search_data.logic_operator,
                 sort_by_col_name)
             p = data.paging = Paging(recs)
             data.records = p.select_recs(recs)
