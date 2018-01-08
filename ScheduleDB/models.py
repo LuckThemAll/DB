@@ -53,6 +53,8 @@ class NamedModel(BaseModel):
         return getattr(self.columns, col_name).get_col_name(self.table_name)
 
     def get_tab_col_for_sort(self, col_name):
+        if col_name == 'name' and 'order_number' in self.columns.__dict__:
+            return getattr(self.columns, 'order_number').get_col_name(self.table_name)
         return getattr(self.columns, col_name).get_col_name(self.table_name)
 
     def fetch_all(self, sort_by_col):
@@ -71,12 +73,16 @@ class NamedModel(BaseModel):
 class RefModel(BaseModel):
     def __init__(self, table_name, title):
         super().__init__(table_name, title)
+        self.type = 'refs'
         self.columns.id = IntegerField('ID', 'ID')
 
     def get_tab_col(self, col):
         return self.columns.get_col(col).get_col_name(self.table_name)
 
     def get_tab_col_for_sort(self, col):
+        if isinstance(self.columns.get_col(col), ReferenceField) and \
+                        'order_number' in self.columns.get_col(col).source.columns.__dict__:
+            return self.columns.get_col(col).source.get_tab_col('order_number')
         return self.columns.get_col(col).get_col_name(self.table_name)
 
     def fetch_all(self, sort_by_col='id'):
