@@ -157,7 +157,7 @@ class SchedItems(RefModel):
         super().__init__('SCHED_ITEMS', 'Расписание')
         self.columns.lesson_id = ReferenceField('LESSON_ID', 'Номер пары', 'ID', Lessons(), 'NAME')
         self.columns.subject_id = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
-        self.columns.audience_id = ReferenceField('AUDIENCE_ID', 'Номер аудитории', 'ID', Audiences(), 'NAME')
+        self.columns.audience_id = ReferenceField('AUDIENCE_ID', 'Аудитория', 'ID', Audiences(), 'NAME')
         self.columns.group_id = ReferenceField('GROUP_ID', 'Группа', 'ID', Groups(), 'NAME')
         self.columns.teacher_id = ReferenceField('TEACHER_ID', 'ФИО преподавателя', 'ID', Teachers(), 'NAME')
         self.columns.type_id = ReferenceField('TYPE_ID', 'Тип пары', 'ID', LessonTypes(), 'NAME')

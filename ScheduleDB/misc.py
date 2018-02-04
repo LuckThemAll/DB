@@ -6,7 +6,4 @@ def get_list(item):
 
 
 def is_correct_fields(records):
-    for item in records:
-        if not item:
-            return False
     return len(records) > 0

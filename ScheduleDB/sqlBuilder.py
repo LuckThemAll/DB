@@ -32,6 +32,8 @@ class SQLBuilder:
         if not fields:
             [self.fields.append(col) for col in self.table.columns.get_col_names(self.table_name)]
         else:
+            if type(fields[0]) is list:
+                fields = fields[0]
             if name:
                 [self.fields.append(self.table.columns.get_col(field).get_col_name(self.table_name)) for field in fields]
             else:

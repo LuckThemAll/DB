@@ -18,7 +18,7 @@ class SearchParameters:
         self.sort_by_col = request.args.get('sort_by_col', 0)
         self.sort_type = request.args.get('sort_type', 'desc', type=str)
         self.logic_operator = request.args.get('lo', 'and')
-        
+
 
 class Paging:
     def __init__(self, records):
@@ -201,7 +201,6 @@ def modify(selected_table_index=0, rec_id=0):
                 sql.set_from_table()
                 sql.add_where_col_names('id')
                 sql.add_operators('=')
-                print(get_list(data.id), sql.get_sql())
                 cur.execute(sql.get_sql(), get_list(data.id))
                 col_id = cur.fetchone()
 
