@@ -16,8 +16,9 @@ class SearchParameters:
         self.search_params = request.args.getlist('search_param')
         self.operators = request.args.getlist('operator')
         self.sort_by_col = request.args.get('sort_by_col', 0)
+        self.sort_type = request.args.get('sort_type', 'desc', type=str)
         self.logic_operator = request.args.get('lo', 'and')
-
+        
 
 class Paging:
     def __init__(self, records):
@@ -105,7 +106,8 @@ def index(selected_table_index=0):
                 data.search_data.search_params,
                 ops,
                 data.search_data.logic_operator,
-                sort_by_col_name)
+                sort_by_col_name,
+                data.search_data.sort_type)
             p = data.paging = Paging(recs)
             data.records = p.select_recs(recs)
 

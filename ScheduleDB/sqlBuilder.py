@@ -11,6 +11,7 @@ class SQLBuilder:
     sort_by_col = ''
     from_table = ''
     sql = ''
+    sort_type = 'desc'
 
     def __init__(self, table):
         self.table = table
@@ -25,6 +26,7 @@ class SQLBuilder:
         self.from_table = ''
         self.sql = ''
         self.logic_operator = ''
+        self.sort_type = 'desc'
 
     def set_fields(self, *fields, name=True):
         if not fields:
@@ -73,6 +75,8 @@ class SQLBuilder:
 
         if self.sort_by_col:
             self.sql += 'order by {0} '.format(self.sort_by_col)
+            if self.sort_type == 'desc':
+                self.sql += 'desc'
 
         return self.sql
 
@@ -93,3 +97,6 @@ class SQLBuilder:
 
     def add_logic_operator(self, logic_operator):
         self.logic_operator = logic_operator
+
+    def add_sort_type(self, sort_type):
+        self.sort_type = sort_type

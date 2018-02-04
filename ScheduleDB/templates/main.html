@@ -8,6 +8,17 @@
             p_count_id.value = p_count_id.value - 1;
             div_id.remove();
         }
+
+        function change_sort_type(h_sort_type_id, h_sort_by_col_id, col_index, main_form_id){
+            if (h_sort_by_col_id.value == col_index){
+                h_sort_type.value == "desc" ? h_sort_type.value = "inc" : h_sort_type.value = "desc";
+            }
+            else{
+                h_sort_by_col_id.value = col_index;
+                h_sort_type.value = "desc";
+            }
+            main_form_id.submit()
+        }
     </script>
 </head>
 <body>
@@ -16,11 +27,11 @@
             <li><a href="/{{ loop.index0 }}">{{ table.title }}</a></li>
         {% endfor %}
     </menu>
-    <form name="where_params">
+    <form id="main_form" name="where_params">
         <input type="hidden" id="p_count" name="params_count" value="{{search_data.params_count}}">
-        <input type="hidden" name="sort_by_col" value="{{search_data.sort_by_col}}">
+        <input type="hidden" id="h_sort_by_col" name="sort_by_col" value="{{search_data.sort_by_col}}">
         <input type="hidden" name="current_page" value="{{paging.current_page}}">
-        <input type="hidden" name="sort_type" value="{{search_data.sort_type}}">
+        <input type="hidden" id='h_sort_type' name="sort_type" value="{{search_data.sort_type}}">
         <div id="params_fields">
             {% for i in range(search_data.params_count)%}
                 <div id="params_field" style="padding: 3px">
@@ -76,34 +87,40 @@
                     {% endif %}</a>
             {% endfor %}<br>
             <input type="button" onclick="window.open('./add')" value="Добавить запись" >
+            <input type="button" onclick="window.open('/schedule')" value="Просмотреть расписание" >
         </div>
-        </form>
-    <div class="right_col" style="float: left; padding: 10px;">
-         {% if selected_table_index is defined %}
-            <table border="3" width="30%">
-                <thead>
-                    {% for header in headers %}
-                        <th>
-                             <a href = {{ change_arg("sort_by_col", loop.index0)}}>
-                                {% if loop.index0 == search_data.sort_by_col|int %}
-                                    <font size="4">{{ header }}</font>
-                                {% else %}
-                                    {{ header }}
-                                {% endif %}</a>
-                        </th>
-                    {% endfor %}
-                </thead>
-                {% for record in records %}
-                    <tr>
-                        {% for col in record %}
-                            <td>{% if col == None %} {% else %} {{ col }} {% endif%} </td>
+        <div class="right_col" style="float: left; padding: 10px;">
+             {% if selected_table_index is defined %}
+                <table border="3" width="30%">
+                    <thead>
+                        {% for header in headers %}
+                            <th>
+                                <div onclick="change_sort_type(h_sort_type, h_sort_by_col, {{loop.index0}}, main_form)">
+                                    <a style="color: #0000A2; cursor: pointer">
+                                        <div class="container">
+                                            <div class="box">
+                                                <div>{{ header }}</div>
+                                                {% if search_data.sort_by_col|int == loop.index0 %}
+                                                    <div>{% if search_data.sort_type == "desc" %} ↓ {% else  %} ↑ {% endif %}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </th>
                         {% endfor %}
-                        <td><a target="_blank" href = "./modify/{{ record[0] }}">Редактировать</a><br>
-                        <button type="submit" name="delid" value="{{record[0]}}">Удалить</button></td>
-                    </tr>
-                {% endfor %}
-            </table>
-        </form>
-        {% endif %}
-    </div>
+                    </thead>
+                    {% for record in records %}
+                        <tr>
+                            {% for col in record %}
+                                <td>{% if col == None %} {% else %} {{ col }} {% endif%} </td>
+                            {% endfor %}
+                            <td><a target="_blank" href = "./modify/{{ record[0] }}">Редактировать</a><br>
+                            <button type="submit" name="delid" value="{{record[0]}}">Удалить</button></td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+        </div>
+    </form>
 </body>

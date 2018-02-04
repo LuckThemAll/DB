@@ -13,5 +13,9 @@ a:hover{
 }
 
 th,tr,td {
-text-align: left;
+text-align: center;
 }
+
+.container{overflow:hidden}
+.box{white-space:nowrap}
+.box div{display:inline-block;}

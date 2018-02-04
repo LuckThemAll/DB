@@ -36,11 +36,12 @@ class BaseModel(metaclass=ABCMeta):
         self.build_base_sql(sort_by_col)
 
     @abstractmethod
-    def fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col):
+    def fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col, sort_type):
         self.build_base_sql(sort_by_col)
         self.sql_builder.add_where_col_names(col_names)
         self.sql_builder.add_operators(operators)
         self.sql_builder.add_logic_operator(logic_operator)
+        self.sql_builder.add_sort_type(sort_type)
 
 
 class NamedModel(BaseModel):
@@ -63,8 +64,8 @@ class NamedModel(BaseModel):
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
 
-    def fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col):
-        BaseModel.fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col)
+    def fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col, sort_type):
+        BaseModel.fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col, sort_type)
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
         return cur.fetchall()
@@ -92,8 +93,8 @@ class RefModel(BaseModel):
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
 
-    def fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col):
-        BaseModel.fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col)
+    def fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col, sort_type):
+        BaseModel.fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col, sort_type)
         self.sql_builder.add_l_joins()
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
