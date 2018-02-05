@@ -11,7 +11,7 @@ class SQLBuilder:
     sort_by_col = ''
     from_table = ''
     sql = ''
-    sort_type = 'desc'
+    sort_type = 'inc'
 
     def __init__(self, table):
         self.table = table
@@ -26,7 +26,7 @@ class SQLBuilder:
         self.from_table = ''
         self.sql = ''
         self.logic_operator = ''
-        self.sort_type = 'desc'
+        self.sort_type = 'inc'
 
     def set_fields(self, *fields, name=True):
         if not fields:

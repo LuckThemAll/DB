@@ -25,15 +25,16 @@ class BaseModel(metaclass=ABCMeta):
         self.columns = self.Columns()
         self.sql_builder = SQLBuilder(self)
 
-    def build_base_sql(self, sort_by_col):
+    def build_base_sql(self, sort_by_col, sort_type='inc'):
         self.sql_builder.clear_fields()
         self.sql_builder.set_fields()
         self.sql_builder.set_from_table()
         self.sql_builder.add_sort_by_col(sort_by_col)
+        self.sql_builder.add_sort_type(sort_type)
 
     @abstractmethod
-    def fetch_all(self, sort_by_col):
-        self.build_base_sql(sort_by_col)
+    def fetch_all(self, sort_by_col, sort_type='inc'):
+        self.build_base_sql(sort_by_col, sort_type)
 
     @abstractmethod
     def fetch_all_by_params(self, col_names, params, operators, logic_operator, sort_by_col, sort_type):
@@ -58,8 +59,8 @@ class NamedModel(BaseModel):
             return getattr(self.columns, 'order_number').get_col_name(self.table_name)
         return getattr(self.columns, col_name).get_col_name(self.table_name)
 
-    def fetch_all(self, sort_by_col):
-        BaseModel.fetch_all(self, sort_by_col)
+    def fetch_all(self, sort_by_col, sort_type='inc'):
+        BaseModel.fetch_all(self, sort_by_col, sort_type)
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
@@ -86,8 +87,8 @@ class RefModel(BaseModel):
             return self.columns.get_col(col).source.get_tab_col('order_number')
         return self.columns.get_col(col).get_col_name(self.table_name)
 
-    def fetch_all(self, sort_by_col='id'):
-        BaseModel.fetch_all(self, sort_by_col)
+    def fetch_all(self, sort_by_col='id', sort_type='inc'):
+        BaseModel.fetch_all(self, sort_by_col, sort_type)
         self.sql_builder.add_l_joins()
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql())

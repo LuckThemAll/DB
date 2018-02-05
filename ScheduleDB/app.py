@@ -112,7 +112,7 @@ def index(selected_table_index=0):
             data.records = p.select_recs(recs)
 
         else:
-            recs = data.records = selected_table.fetch_all(sort_by_col_name)
+            recs = data.records = selected_table.fetch_all(sort_by_col_name, data.sort_type)
             data.paging = Paging(recs)
             data.records = data.paging.select_recs(recs)
         return render_template('main.html', **data.__dict__)

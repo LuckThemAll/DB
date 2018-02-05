@@ -100,8 +100,8 @@
                                         <div class="container">
                                             <div class="box">
                                                 <div>{{ header }}</div>
-                                                {% if search_data.sort_by_col|int == loop.index0 %}
-                                                    <div>{% if search_data.sort_type == "desc" %} ↓ {% else  %} ↑ {% endif %}</div>
+                                                {% if sort_by_col|int == loop.index0 %}
+                                                    <div>{% if sort_type == "desc" %} ↓ {% else  %} ↑ {% endif %}</div>
                                                 {% endif %}
                                             </div>
                                         </div>
