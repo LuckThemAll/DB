@@ -29,48 +29,44 @@
     </menu>
     <form id="main_form" name="where_params">
         <input type="hidden" id="p_count" name="params_count" value="{{search_data.params_count}}">
-        <input type="hidden" id="h_sort_by_col" name="sort_by_col" value="{{search_data.sort_by_col}}">
+        <input type="hidden" id="h_sort_by_col" name="sort_by_col" value="{{sort_by_col}}">
         <input type="hidden" name="current_page" value="{{paging.current_page}}">
-        <input type="hidden" id='h_sort_type' name="sort_type" value="{{search_data.sort_type}}">
+        <input type="hidden" id='h_sort_type' name="sort_type" value="{{sort_type}}">
         <div id="params_fields">
             {% for i in range(search_data.params_count)%}
-                <div id="params_field" style="padding: 3px">
-                    <div id="p{{loop.index0}}">
-                        <select name="search_col" >
-                            {% for search_col_name in search_data.search_col_names %}
-                                <option {% if search_data.selected_col_name_indexes[i] is defined and
-                                        search_data.selected_col_name_indexes[i]|int == loop.index0 %}
-                                            selected
-                                        {% endif %}
-                                        value="{{ loop.index0 }}"
-                                >{{ search_col_name }}</option>
-                            {% endfor %}
-                        </select>
-                        <select name="operator">
-                            {% for operator in operators %}
-                                <option {% if search_data.operators[i] == operator %} selected {% endif %}>{{ operator }}</option>
-                            {% endfor %}
-                        </select>
-                        <input name="search_param" type="text" value="{{ search_data.search_params[i] }}" />
-                        <button type="submit" onclick="delete_param(p{{loop.index0}}, p_count);">Удалить</button>
-                    </div>
+                <div id="p{{loop.index0}}" style="padding: 3px">
+                    <select name="search_col">
+                        {% for search_col_name in search_data.search_col_names %}
+                            <option {% if search_data.selected_col_name_indexes[i] is defined and
+                                    search_data.selected_col_name_indexes[i]|int == loop.index0 %}
+                                        selected
+                                    {% endif %}
+                                    value="{{ loop.index0 }}"
+                            >{{ search_col_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="operator">
+                        {% for operator in operators %}
+                            <option {% if search_data.operators[i] == operator %} selected {% endif %}>{{ operator }}</option>
+                        {% endfor %}
+                    </select>
+                    <input name="search_param" type="text" size="10" value="{{ search_data.search_params[i] }}" />
+                    <button type="submit" onclick="delete_param(p{{loop.index0}}, p_count);">➖</button>
                 </div>
             {% endfor %}
         </div>
         <div style="padding: 3px">
             {% if search_data.params_count >= 1%}
             <input type="submit" value="Найти">
-            <input type="submit" value="+" onclick="params_count.value = {{search_data.params_count + 1}}">
-            <input type="submit" value="-"
-                    onclick="params_count.value = {{search_data.params_count - 1}}">
+            <input type="submit" value="➕" onclick="params_count.value = {{search_data.params_count + 1}}">
             <select name="lo">
                 {% for operator in logic_operators %}
-                    <option {% if search_data.logic_operator == operator %} selected {% endif %}>{{ operator }}</option>
+                    <option {% if logic_operator == operator %} selected {% endif %}>{{ operator }}</option>
                 {% endfor %}
             </select>
             <br>
             {% else %}
-            <input type="submit" value="+" onclick="params_count.value = {{search_data.params_count + 1}}">
+                <input type="submit" value="➕" onclick="params_count.value = {{search_data.params_count + 1}}">
             {%endif%}
         </div>
         <div style="padding: 3px">

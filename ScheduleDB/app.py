@@ -15,9 +15,6 @@ class SearchParameters:
         self.selected_col_name_indexes = request.args.getlist('search_col')
         self.search_params = request.args.getlist('search_param')
         self.operators = request.args.getlist('operator')
-        self.sort_by_col = request.args.get('sort_by_col', 0)
-        self.sort_type = request.args.get('sort_type', 'desc', type=str)
-        self.logic_operator = request.args.get('lo', 'and')
 
 
 class Paging:
@@ -91,6 +88,11 @@ def index(selected_table_index=0):
             sql = SQLBuilder(selected_table)
             try: cur.execute(sql.get_delete(), get_list(data.delId))
             except: data.delId = -1
+
+        data.sort_by_col = request.args.get('sort_by_col', 0)
+        data.sort_type = request.args.get('sort_type', 'inc', type=str)
+        data.logic_operator = request.args.get('lo', 'and')
+
         data.logic_operators = logic_operators
         data.search_data = SearchParameters(selected_table)
         data.operators = [item for item in operators.keys()]
@@ -98,16 +100,18 @@ def index(selected_table_index=0):
         data.headers = selected_table.columns.get_titles()
 
         search_col_names = [item for item in selected_table.columns.__dict__]
-        sort_by_col_name = search_col_names[int(data.search_data.sort_by_col)]
+
+        print(data.sort_by_col)
+        sort_by_col_name = search_col_names[int(data.sort_by_col)]
         if data.search_data.search_params:
             ops = [operators[item] for item in data.search_data.operators]
             recs = data.records = selected_table.fetch_all_by_params(
                 [search_col_names[int(item)] for item in data.search_data.selected_col_name_indexes],
                 data.search_data.search_params,
                 ops,
-                data.search_data.logic_operator,
+                data.logic_operator,
                 sort_by_col_name,
-                data.search_data.sort_type)
+                data.sort_type)
             p = data.paging = Paging(recs)
             data.records = p.select_recs(recs)
 
@@ -157,8 +161,8 @@ def add_record(selected_table_index=0):
 
     if is_correct_fields(new_values):
         sql = SQLBuilder(selected_table)
-        print(sql.set_insert(selected_table.columns.get_cols_without_id()), params)
-        cur.execute(sql.set_insert(selected_table.columns.get_cols_without_id()), params)
+        print(sql.get_insert(selected_table.columns.get_cols_without_id()), params)
+        cur.execute(sql.get_insert(selected_table.columns.get_cols_without_id()), params)
     return render_template('add.html', **data.__dict__)
 
 

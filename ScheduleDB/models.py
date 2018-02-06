@@ -75,7 +75,6 @@ class NamedModel(BaseModel):
 class RefModel(BaseModel):
     def __init__(self, table_name, title):
         super().__init__(table_name, title)
-        self.type = 'refs'
         self.columns.id = IntegerField('ID', 'ID')
 
     def get_tab_col(self, col):
