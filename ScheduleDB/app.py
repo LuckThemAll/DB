@@ -251,9 +251,68 @@ def modify(selected_table_index=0, rec_id=0):
         sql = SQLBuilder(selected_table)
         cols = selected_table.columns.get_cols_without_id()
         params.append(rec_id)
-        print(sql.set_update(cols), params)
-        cur.execute(sql.set_update(cols), params)
+        print(sql.get_update(cols), params)
+        cur.execute(sql.get_update(cols), params)
 
     cur.transaction.commit()
     save_current_values()
     return render_template('modify.html', **data.__dict__)
+
+
+@app.route('/schedule/')
+def view_schedule():
+    data = TemplateData()
+    table = SchedItems()
+    data.projections = table.columns.get_titles_without_id()
+
+    data.sel_x = request.args.get('x', 'Группа')
+    data.sel_y = request.args.get('y', 'День недели')
+    data.col_indexes = []
+    [data.col_indexes.append(data.projections.index(name)) for name in data.projections if request.args.get(name, 1, type=int)]
+    data.sel_x_index = min(data.projections.index(data.sel_x), data.projections.index(data.sel_y))
+    data.sel_y_index = max(data.projections.index(data.sel_x), data.projections.index(data.sel_y))
+    data.cols_without_id = table.columns.get_cols_without_id()
+
+    data.showed_cols = request.args.getlist('shw_cls')
+    '''data.showed_cols = [item for item in data.showed_cols]
+if not data.sel_x in data.showed_cols:
+    data.showed_cols.append(data.sel_x)
+if not data.sel_y in data.showed_cols:
+    data.showed_cols.append(data.sel_y)'''
+
+    data.sort_by_col = data.sel_y_index
+    data.sort_type = 'inc'
+    data.logic_operator = request.args.get('lo', 'and')
+    data.search_data = SearchParameters(table)
+    data.search_data.search_col_names = [table.columns.get_col(item).col_title for item in table.columns.get_cols_without_id()]
+    data.operators = operators
+    data.logic_operators = logic_operators
+    search_col_names = [item for item in table.columns.__dict__]
+    ops = [operators[item] for item in data.search_data.operators]
+    sort_by_col_name = data.cols_without_id[data.sel_y_index]
+    data.rows = table.fetch_all_by_params(
+                [search_col_names[int(item)] for item in data.search_data.selected_col_name_indexes],
+                data.search_data.search_params,
+                ops,
+                data.logic_operator,
+                sort_by_col_name,
+                data.sort_type)
+    data.rows = [list(row) for row in data.rows]
+    # for row in data.rows:
+    #    row.pop(0)
+    print(data.rows)
+    print(data.search_data.search_col_names)
+    for row in data.rows:
+        if row[data.sel_x_index + 1] == None:
+            row[data.sel_x_index + 1] = 'None'
+    data.viewed_table = dict.fromkeys(sorted([row[data.sel_x_index + 1] for row in data.rows]))
+    print(data.viewed_table)
+    for col in data.viewed_table:
+        data.viewed_table[col] = dict.fromkeys([col[data.sel_y_index + 1] for col in data.rows])
+    for row in data.rows:
+        if not data.viewed_table[row[data.sel_x_index + 1]][row[data.sel_y_index + 1]]:
+            data.viewed_table[row[data.sel_x_index + 1]][row[data.sel_y_index + 1]] = [row]
+        else:
+            data.viewed_table[row[data.sel_x_index + 1]][row[data.sel_y_index + 1]].append(row)
+    # print(data.viewed_table)
+    return render_template('schedule.html', **data.__dict__)
