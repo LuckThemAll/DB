@@ -281,17 +281,16 @@ def view_schedule():
     data.cols_without_id = table.columns.get_cols_without_id()
 
     data.showed_cols = request.args.getlist('shw_cls')
-    '''data.showed_cols = [item for item in data.showed_cols]
-if not data.sel_x in data.showed_cols:
-    data.showed_cols.append(data.sel_x)
-if not data.sel_y in data.showed_cols:
-    data.showed_cols.append(data.sel_y)'''
+    data.p_change_flag = request.args.get('p_change_flag', 'true', type=str)
+    data.header_view = request.args.get('header_view', 'true')
 
     data.sort_by_col = data.sel_y_index
     data.sort_type = 'inc'
     data.logic_operator = request.args.get('lo', 'and')
     data.search_data = SearchParameters(table)
     data.search_data.search_col_names = [table.columns.get_col(item).col_title for item in table.columns.get_cols_without_id()]
+    if data.p_change_flag == 'true':
+        [data.showed_cols.append(item) for item in data.search_data.search_col_names]
     data.operators = operators
     data.logic_operators = logic_operators
     search_col_names = [item for item in table.columns.__dict__]
