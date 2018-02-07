@@ -160,10 +160,12 @@ def add_record(selected_table_index=0):
         return fields
 
     data = TemplateData()
-    data.f_olap_col = request.args.get('col', 'none')
+    f_olap_col = request.args.get('col', 'none')
     data.f_olap_row_val = request.args.get('row_value', 'none')
-    data.f_olap_row = request.args.get('row', 'none')
+    f_olap_row = request.args.get('row', 'none')
     data.f_olap_col_val = request.args.get('col_value', 'none')
+    data.f_olap_col = max(f_olap_row, f_olap_col)
+    data.f_olap_row = min(f_olap_row, f_olap_col)
     print(data.f_olap_col, data.f_olap_row, data.f_olap_col_val, data.f_olap_row_val)
     selected_table = tables[selected_table_index]
     data.titles = selected_table.columns.get_titles_without_id()
