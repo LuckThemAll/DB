@@ -142,6 +142,9 @@ def add_record(selected_table_index=0):
         if is_correct_fields(fields):
             for i, col in enumerate(selected_table.columns.get_cols_without_id()):
                 if isinstance(selected_table.columns.get_col(col), ReferenceField):
+                    if params[i] == '':
+                        params[i] = None
+                        continue
                     sql = SQLBuilder(selected_table.columns.get_col(col).source)
                     sql.clear_fields()
                     sql.set_fields('id')

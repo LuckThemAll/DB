@@ -19,6 +19,7 @@
                         <input name="p" type="text">
                     {% else %}
                     <select style="width: 130px" name="p">
+                        <option selected></option>
                         {% for item in options[option] %}
                             <option>{{ item[0] }}</option>
                         {% endfor %}
