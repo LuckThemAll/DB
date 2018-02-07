@@ -122,10 +122,11 @@ def index(selected_table_index=0):
         return render_template('main.html', **data.__dict__)
 
 
-@app.route('/<int:selected_table_index>/add')
+@app.route('/<int:selected_table_index>/add/')
 def add_record(selected_table_index=0):
     def set_options():
         data.options = {}
+        i=-1
         for key, val in selected_table.columns.__dict__.items():
             if isinstance(val, ReferenceField):
                 sql = SQLBuilder(selected_table.columns.get_col(key).source)
@@ -134,9 +135,12 @@ def add_record(selected_table_index=0):
                 sql.set_from_table()
                 sql.add_l_joins()
                 cur.execute(sql.get_sql())
-                data.options[key] = cur.fetchall()
+                data.options[key] = {}
+                data.options[key]['index'] = i
+                data.options[key]['values'] = cur.fetchall()
             elif key != 'id':
                 data.options[key] = 'none'
+            i+=1
 
     def refs_to_source_id(fields):
         if is_correct_fields(fields):
@@ -156,6 +160,11 @@ def add_record(selected_table_index=0):
         return fields
 
     data = TemplateData()
+    data.f_olap_col = request.args.get('col', 'none')
+    data.f_olap_row_val = request.args.get('row_value', 'none')
+    data.f_olap_row = request.args.get('row', 'none')
+    data.f_olap_col_val = request.args.get('col_value', 'none')
+    print(data.f_olap_col, data.f_olap_row, data.f_olap_col_val, data.f_olap_row_val)
     selected_table = tables[selected_table_index]
     data.titles = selected_table.columns.get_titles_without_id()
     set_options()
@@ -166,6 +175,7 @@ def add_record(selected_table_index=0):
         sql = SQLBuilder(selected_table)
         print(sql.get_insert(selected_table.columns.get_cols_without_id()), params)
         cur.execute(sql.get_insert(selected_table.columns.get_cols_without_id()), params)
+    cur.transaction.commit()
     return render_template('add.html', **data.__dict__)
 
 
@@ -304,15 +314,16 @@ def view_schedule():
                 sort_by_col_name,
                 data.sort_type)
     data.rows = [list(row) for row in data.rows]
-    # for row in data.rows:
-    #    row.pop(0)
     print(data.rows)
     print(data.search_data.search_col_names)
     for row in data.rows:
         if row[data.sel_x_index + 1] == None:
             row[data.sel_x_index + 1] = 'None'
     data.viewed_table = dict.fromkeys(sorted([row[data.sel_x_index + 1] for row in data.rows]))
-    print(data.viewed_table)
+    data.headers = []
+    for col in data.rows:
+        if col[data.sel_y_index + 1] not in data.headers:
+            data.headers.append(col[data.sel_y_index + 1])
     for col in data.viewed_table:
         data.viewed_table[col] = dict.fromkeys([col[data.sel_y_index + 1] for col in data.rows])
     for row in data.rows:
@@ -320,5 +331,4 @@ def view_schedule():
             data.viewed_table[row[data.sel_x_index + 1]][row[data.sel_y_index + 1]] = [row]
         else:
             data.viewed_table[row[data.sel_x_index + 1]][row[data.sel_y_index + 1]].append(row)
-    # print(data.viewed_table)
     return render_template('schedule.html', **data.__dict__)

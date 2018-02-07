@@ -6,6 +6,10 @@
  </head>
  <body>
     <form>
+        <input type="hidden" name="col" value="{{ f_olap_col }}">
+        <input type="hidden" name="row" value="{{ f_olap_row }}">
+        <input type="hidden" name="col_value" value="{{ f_olap_col_val }}">
+        <input type="hidden" name="row_value" value="{{ f_olap_row_val }}">
         <table>
             <tr>
             {% for title in titles %}
@@ -20,8 +24,10 @@
                     {% else %}
                     <select style="width: 130px" name="p">
                         <option selected></option>
-                        {% for item in options[option] %}
-                            <option>{{ item[0] }}</option>
+                        {% for item in options[option]['values'] %}
+                            <option {% if titles[options[option]['index']] == f_olap_row and item[0] == f_olap_row_val%} selected {%endif%}
+                                    {% if titles[options[option]['index']] == f_olap_col and item[0] == f_olap_col_val%} selected {%endif%}>
+                                {{ item[0] }}</option>
                         {% endfor %}
                         </select>
                     {% endif %}
