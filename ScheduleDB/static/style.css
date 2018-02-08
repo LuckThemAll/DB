@@ -12,9 +12,56 @@ a:hover{
     text-decoration: underline;
 }
 
-th,tr,td {
-text-align: center;
+TABLE {
+    border-collapse: collapse;
+    border: 2px solid black;
 }
+
+.main_table{
+    border: 2px solid black;
+}
+
+.card{
+    border: 2px solid #377DBF;
+    border-left: none;
+    border-right: none;
+    border-bottom: 3px solid #377DBF;
+}
+
+TH{
+    font-size: 10pt;
+}
+
+.main_th{
+    vertical-align: top;
+    background: white;
+    border: 2px solid black;
+
+}
+
+.main_header{
+    font: 15pt sans-serif;
+    background: #C0C0C0;
+    border: 2px solid black;
+}
+
+.card_header{
+    font: 12pt times;
+    text-align: left;
+    background: white;
+    border-right: 1px solid black;
+}
+
+.card_record{
+    padding: 3px;
+    font-size: 16px;
+    text-align: left;
+}
+
+.actions{
+    font-size: 12pt
+}
+
 
 .container{overflow:hidden}
 .box{white-space:nowrap}
