@@ -159,6 +159,6 @@ class SchedItems(RefModel):
         self.columns.subject_id = ReferenceField('SUBJECT_ID', 'Предмет', 'ID', Subjects(), 'NAME')
         self.columns.audience_id = ReferenceField('AUDIENCE_ID', 'Аудитория', 'ID', Audiences(), 'NAME')
         self.columns.group_id = ReferenceField('GROUP_ID', 'Группа', 'ID', Groups(), 'NAME')
-        self.columns.teacher_id = ReferenceField('TEACHER_ID', 'ФИО преподавателя', 'ID', Teachers(), 'NAME')
+        self.columns.teacher_id = ReferenceField('TEACHER_ID', 'Преподователь', 'ID', Teachers(), 'NAME')
         self.columns.type_id = ReferenceField('TYPE_ID', 'Тип пары', 'ID', LessonTypes(), 'NAME')
         self.columns.weekday_id = ReferenceField('WEEKDAY_ID', 'День недели', 'ID', WeekDays(), 'NAME')

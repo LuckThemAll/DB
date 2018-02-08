@@ -309,7 +309,10 @@ def view_schedule():
     data.search_data = SearchParameters(table)
     data.search_data.search_col_names = [table.columns.get_col(item).col_title for item in table.columns.get_cols_without_id()]
     if data.p_change_flag == 'true':
+        data.showed_cols = []
         [data.showed_cols.append(item) for item in data.search_data.search_col_names]
+        del data.showed_cols[data.sel_y_index]
+        del data.showed_cols[data.sel_x_index]
     data.operators = operators
     data.logic_operators = logic_operators
     search_col_names = [item for item in table.columns.__dict__]
