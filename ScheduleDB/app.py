@@ -282,6 +282,13 @@ def modify(selected_table_index=0, rec_id=0):
 def view_schedule():
     data = TemplateData()
     table = SchedItems()
+    data.delId = request.args.get('delid', -1, type=int)
+    if data.delId != -1:
+        sql = SQLBuilder(table)
+        try:
+            cur.execute(sql.get_delete(), get_list(data.delId))
+        except:
+            data.delId = -1
     data.projections = table.columns.get_titles_without_id()
 
     data.sel_x = request.args.get('x', 'Группа')
