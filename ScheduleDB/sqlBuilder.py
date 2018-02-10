@@ -79,12 +79,17 @@ class SQLBuilder:
             self.sql += 'order by {0} '.format(self.sort_by_col)
             if self.sort_type == 'desc':
                 self.sql += 'desc'
-
         return self.sql
 
-    def get_insert(self, fields):
-        sql = 'INSERT INTO {0}({1}) VALUES ({2});'.format(self.table_name, ','.join(fields), ','.join('?'*len(fields)))
-        return sql
+    def get_insert(self, fields, table=None, data=None, is_conflict = False):
+        if not is_conflict:
+            sql = 'INSERT INTO {0}({1}) VALUES ({2});'.format(self.table_name, ','.join(fields), ','.join('?'*len(fields)))
+            return sql
+        else:
+            sql = 'insert into %s ' % table
+            sql += '(%s) ' % ','.join(field for field in data)
+            sql += 'values (?%s)' % (',?' * (len(data) - 1))
+            return sql
 
     def get_update(self, cols):
         updated_cols = []
@@ -102,3 +107,28 @@ class SQLBuilder:
 
     def add_sort_type(self, sort_type):
         self.sort_type = sort_type
+
+    def get_conflict(self, type_id):
+        self.clear_fields()
+        self.set_fields()
+        sql = 'select c.CONFLICT_GROUP_ID, '+', '.join(self.fields) + ' from CONFLICTS c '
+        sql += ' inner join SCHED_ITEMS on c.SCHED_ITEM_ID = SCHED_ITEMS.ID '
+        self.add_l_joins()
+        for l_join in self.l_joins:
+            sql += ' left join {0} on {0}.{1}={2}.{3} '.format(*l_join)
+        sql += ' where c.CONFLICT_TYPE_ID = %d' % type_id
+        self.clear_fields()
+        return sql
+
+    def get_conflicting_ids(self):
+        sql = 'SELECT c.SCHED_ITEM_ID FROM CONFLICTS c'
+        return sql
+
+    def create_conflict(self, fields):
+        sql = 'select ID,'
+        sql += ','.join('t1.' + field for field in fields)
+        sql += ' from SCHED_ITEMS t1 where exists (select * from SCHED_ITEMS t2 where '
+        sql += ' AND '.join('t1.%s = t2.%s' % (field, field) for field in fields)
+        sql += ' AND t1.ID <> t2.ID)'
+        sql += ' GROUP BY %s,ID' % ','.join(fields)
+        return sql

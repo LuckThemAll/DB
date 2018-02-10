@@ -1,11 +1,16 @@
 <!DOCTYPE HTML>
 <html>
  <head>
-  <meta charset="utf-8">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+     <meta charset="utf-8">
+     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
  </head>
  <body>
     <form>
+        <input type="hidden" name="c" value="{{ f_olap_col }}">
+        <input type="hidden" name="r" value="{{ f_olap_row }}">
+        <input type="hidden" name="rval" value="{{ f_olap_row_val }}">
+        <input type="hidden" name="cval" value="{{ f_olap_col_val }}">
+        <input type="hidden" name="is_drop" value="{{ olap_is_drop }}">
         <table>
             <tr>
             {% for title in titles %}
@@ -20,8 +25,24 @@
                     {% else  %}
                         <select style="width: 130px" name="p">
                             <option {% if current_values[option] == 'none' %} selected {% endif %} name="p"></option>
-                            {% for item in options[option] %}
-                                <option {% if item == current_values[option][0] %} selected {% endif %} name="p">{{ item[0] }}</option>
+                            {% for item in options[option]['values'] %}
+                                <option
+                                        {% if olap_is_drop == 'true' %}
+                                            {% if titles[options[option]['index']] == f_olap_row %}
+                                                {% if item[0] == f_olap_row_val %}
+                                                    selected
+                                                {%endif%}
+                                            {% elif titles[options[option]['index']] == f_olap_col %}
+                                                {% if item[0] == f_olap_col_val %}
+                                                    selected
+                                                {% endif %}
+                                            {% elif item == current_values[option][0] %}
+                                                selected
+                                            {% endif %}
+                                        {% else %}
+                                            {% if item == current_values[option][0] %} selected {% endif %}
+                                        {% endif %}
+                                        name="p" >{{ item[0] }}</option>
                             {% endfor %}
                         </select>
                     {% endif %}
@@ -30,7 +51,6 @@
             </tr>
         </table>
         <input type="submit" value="Сохранить и продолжить">
-        <input type="submit" value="Закрыть" onclick="window.close()">
     </form>
  </body>
 </html>

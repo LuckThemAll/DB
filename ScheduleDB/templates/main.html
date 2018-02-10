@@ -22,6 +22,12 @@
     </script>
 </head>
 <body>
+        <h3>
+            <a href="/schedule/" class="std_button">Аналитика    </a>
+            <a href="/conflicts/" class="std_button">Конфликты   </a>
+            <a href="/0" class="std_button">Таблицы   </a>
+            <br>
+        </h3>
     <menu class="top_menu">
         {% for table in tables %}
             <li><a href="/{{ loop.index0 }}">{{ table.title }}</a></li>

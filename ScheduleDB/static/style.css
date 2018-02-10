@@ -36,7 +36,6 @@ TH{
     vertical-align: top;
     background: white;
     border: 2px solid black;
-
 }
 
 .main_header{
@@ -58,8 +57,16 @@ TH{
     text-align: left;
 }
 
+.card{
+}
+
 .actions{
     font-size: 12pt
+}
+
+.conf{
+    border: 4px solid blue;
+    margin: 5px
 }
 
 

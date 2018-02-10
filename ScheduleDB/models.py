@@ -1,4 +1,4 @@
-from db_connect import cur
+from db_connect import *
 from sqlBuilder import *
 
 
@@ -162,3 +162,17 @@ class SchedItems(RefModel):
         self.columns.teacher_id = ReferenceField('TEACHER_ID', 'Преподователь', 'ID', Teachers(), 'NAME')
         self.columns.type_id = ReferenceField('TYPE_ID', 'Тип пары', 'ID', LessonTypes(), 'NAME')
         self.columns.weekday_id = ReferenceField('WEEKDAY_ID', 'День недели', 'ID', WeekDays(), 'NAME')
+
+
+tables = (
+          Audiences(),
+          Groups(),
+          Lessons(),
+          LessonTypes(),
+          SchedItems(),
+          Subjects(),
+          SubjectGroup(),
+          SubjectTeacher(),
+          Teachers(),
+          WeekDays()
+        )

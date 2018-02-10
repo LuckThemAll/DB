@@ -1,9 +1,9 @@
 from flask import Flask
 from flask import render_template
-from models import *
 from flask import request
 from werkzeug.urls import url_encode
 from math import ceil
+from conflicts import *
 
 app = Flask(__name__)
 
@@ -11,7 +11,7 @@ app = Flask(__name__)
 class SearchParameters:
     def __init__(self, table):
         self.search_col_names = [getattr(table.columns, item).get_col_title() for item in table.columns.__dict__]
-        self.params_count = request.args.get('params_count', 1, type=int)
+        self.params_count = request.args.get('params_count', 0, type=int)
         self.selected_col_name_indexes = request.args.getlist('search_col')
         self.search_params = request.args.getlist('search_param')
         self.operators = request.args.getlist('operator')
@@ -35,19 +35,6 @@ class TemplateData:
     def __init__(self):
         self.tables = tables
 
-
-tables = (
-          Audiences(),
-          Groups(),
-          Lessons(),
-          LessonTypes(),
-          SchedItems(),
-          Subjects(),
-          SubjectGroup(),
-          SubjectTeacher(),
-          Teachers(),
-          WeekDays()
-        )
 
 operators = {
     'СОДЕРЖИТ': 'CONTAINING',
@@ -101,7 +88,6 @@ def index(selected_table_index=0):
 
         search_col_names = [item for item in selected_table.columns.__dict__]
 
-        print(data.sort_by_col)
         sort_by_col_name = search_col_names[int(data.sort_by_col)]
         if data.search_data.search_params:
             ops = [operators[item] for item in data.search_data.operators]
@@ -166,7 +152,6 @@ def add_record(selected_table_index=0):
     data.f_olap_col_val = request.args.get('col_value', 'none')
     data.f_olap_col = max(f_olap_row, f_olap_col)
     data.f_olap_row = min(f_olap_row, f_olap_col)
-    print(data.f_olap_col, data.f_olap_row, data.f_olap_col_val, data.f_olap_row_val)
     selected_table = tables[selected_table_index]
     data.titles = selected_table.columns.get_titles_without_id()
     set_options()
@@ -178,12 +163,24 @@ def add_record(selected_table_index=0):
         print(sql.get_insert(selected_table.columns.get_cols_without_id()), params)
         cur.execute(sql.get_insert(selected_table.columns.get_cols_without_id()), params)
     cur.transaction.commit()
+    update_conflicts()
     return render_template('add.html', **data.__dict__)
 
 
-@app.route('/<int:selected_table_index>/modify/<int:rec_id>')
+@app.route('/<int:selected_table_index>/modify/<int:rec_id>/')
 def modify(selected_table_index=0, rec_id=0):
     data = TemplateData()
+
+    f_olap_col = request.args.get('c', 'none')
+    data.f_olap_row_val = request.args.get('rval', 'none')
+    f_olap_row = request.args.get('r', 'none')
+    data.f_olap_col_val = request.args.get('cval', 'none')
+
+    data.olap_is_drop = request.args.get('is_drop', 'false')
+
+    data.f_olap_col = min(f_olap_row, f_olap_col)
+    data.f_olap_row = max(f_olap_row, f_olap_col)
+
     data.id = rec_id
     selected_table = tables[selected_table_index]
     data.titles = selected_table.columns.get_titles_without_id()
@@ -191,6 +188,7 @@ def modify(selected_table_index=0, rec_id=0):
 
     def set_options():
         data.options = {}
+        i=-1
         for key, val in selected_table.columns.__dict__.items():
             if isinstance(val, ReferenceField):
                 sql = SQLBuilder(selected_table.columns.get_col(key).source)
@@ -199,7 +197,9 @@ def modify(selected_table_index=0, rec_id=0):
                 sql.set_from_table()
                 sql.add_l_joins()
                 cur.execute(sql.get_sql())
-                data.options[key] = cur.fetchall()
+                data.options[key] = {}
+                data.options[key]['index'] = i
+                data.options[key]['values'] = cur.fetchall()
             elif key != 'id':
                 sql = SQLBuilder(selected_table)
                 sql.clear_fields()
@@ -210,6 +210,7 @@ def modify(selected_table_index=0, rec_id=0):
                 print(sql.get_sql(), get_list(rec_id))
                 cur.execute(sql.get_sql(), get_list(rec_id))
                 data.options[key] = 'none'
+            i+=1
 
     def save_current_values():
         for key, val in selected_table.columns.__dict__.items():
@@ -257,23 +258,45 @@ def modify(selected_table_index=0, rec_id=0):
                     sql.set_from_table()
                     sql.add_where_col_names('name')
                     sql.add_operators('=')
-                    cur.execute(sql.get_sql(), (params[i],))
-                    params[i] = cur.fetchall()[0][0]
+                    try:
+                        cur.execute(sql.get_sql(), (params[i],))
+                        params[i] = cur.fetchall()[0][0]
+                    except:
+                        try:
+                            cur.execute(sql.get_sql(), (params[i]['1'],))
+                            params[i] = cur.fetchall()[0][0]
+                        except:
+                            try:
+                                cur.execute(sql.get_sql(), (params[i]['2'],))
+                                params[i] = cur.fetchall()[0][0]
+                            except:
+                                params[i] = None
 
     set_options()
     save_current_values()
-
-    params = request.args.getlist("p")
-    refs_to_source_id()
+    if data.olap_is_drop == 'true':
+        for key in data.current_values:
+            if data.current_values[key] != 'none':
+                data.current_values[key] = data.current_values[key][0][0]
+            if (selected_table.columns.get_col(key).col_title == data.f_olap_row or
+                selected_table.columns.get_col(key).col_title == data.f_olap_col):
+                data.current_values[key] = {}
+                data.current_values[key]['1'] = data.f_olap_col_val
+                data.current_values[key]['2'] = data.f_olap_row_val
+        params = [item for key, item in data.current_values.items()]
+        refs_to_source_id()
+    else:
+        params = request.args.getlist("p")
+        refs_to_source_id()
 
     if is_correct_fields(params):
         sql = SQLBuilder(selected_table)
         cols = selected_table.columns.get_cols_without_id()
         params.append(rec_id)
-        print(sql.get_update(cols), params)
         cur.execute(sql.get_update(cols), params)
 
     cur.transaction.commit()
+    update_conflicts()
     save_current_values()
     return render_template('modify.html', **data.__dict__)
 
@@ -287,6 +310,7 @@ def view_schedule():
         sql = SQLBuilder(table)
         try:
             cur.execute(sql.get_delete(), get_list(data.delId))
+            update_conflicts()
         except:
             data.delId = -1
     data.projections = table.columns.get_titles_without_id()
@@ -326,8 +350,6 @@ def view_schedule():
                 sort_by_col_name,
                 data.sort_type)
     data.rows = [list(row) for row in data.rows]
-    print(data.rows)
-    print(data.search_data.search_col_names)
     for row in data.rows:
         if row[data.sel_x_index + 1] == None:
             row[data.sel_x_index + 1] = 'None'
@@ -343,4 +365,39 @@ def view_schedule():
             data.viewed_table[row[data.sel_x_index + 1]][row[data.sel_y_index + 1]] = [row]
         else:
             data.viewed_table[row[data.sel_x_index + 1]][row[data.sel_y_index + 1]].append(row)
+    query = SQLBuilder.get_conflicting_ids(SQLBuilder(table))
+    cur.execute(query)
+    data.conflictingIDs = [item[0] for item in cur.fetchall()]
     return render_template('schedule.html', **data.__dict__)
+
+
+@app.route("/conflicts/")
+@app.route("/conflicts/<int:type_id>/")
+def conflict(type_id=0):
+    data = TemplateData()
+    data.table = SchedItems()
+    data.viewedNames = data.table.columns.get_titles()
+    data.delId = request.args.get('delID', -1, type=int)
+    if data.delId != -1:
+        sql = SQLBuilder(data.table)
+        try:
+            cur.execute(sql.get_delete(), get_list(data.delId))
+            data.delId = -1
+            update_conflicts()
+        except:
+            data.delId = -1
+    query = SQLBuilder.get_conflict(SQLBuilder(SchedItems()), type_id)
+    cur.execute(query)
+    data.rows = cur.fetchall()
+    data.conflicts_by_groups = [[]]
+    data.last_group_id = -1
+    for conflict in data.rows:
+        if conflict == data.rows[0]:
+            data.last_group_id = conflict[0]
+        if conflict[0] != data.last_group_id:
+            data.conflicts_by_groups.append([])
+        data.conflicts_by_groups[-1].append(conflict[1:])
+        data.last_group_id = conflict[0]
+    data.rows_list = data.conflicts_by_groups
+    data.conflicts = conflicts
+    return render_template("conflicts_page.html", **data.__dict__)

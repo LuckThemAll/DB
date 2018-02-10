@@ -6,6 +6,21 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <script>
+        $(document).ready(function(){
+        console.log('aa');
+            $('.btn_show').click(function() {
+                console.log('aa');
+                var $cards = $(this).parent().children('.card_block');
+                if ($cards.attr('hidden')) {
+                    $cards.removeAttr('hidden');
+                    $(this).val('Свернуть');
+                } else {
+                    $cards.attr('hidden', 0);
+                    $(this).val('Развернуть');
+                }
+            });
+        });
+
         function delete_param(div_id, p_count_id){
             p_count_id.value = p_count_id.value - 1;
             div_id.remove();
@@ -40,26 +55,37 @@
                 header_view.value = 'true'
             }
         }
-
+        </script>
+        <script>
         function allowDrop(ev) {
              ev.preventDefault();
-         }
-         function drag(ev) {
+        }
+
+        function drag(ev) {
              ev.dataTransfer.setData("id", ev.target.id);
-         }
-         function drop(ev) {
+        }
+
+        function drop(ev) {
              ev.preventDefault();
              var data = ev.dataTransfer.getData("id");
-             href = "/4/"
+             href = "/4/modify/"+data+"/?cval="+ev.target.getAttribute('cval')+"&rval="+ev.target.getAttribute('rval')+"&c="+
+             ev.target.getAttribute('c')+"&r="+ev.target.getAttribute('r')+"&is_drop=true"
              $.ajax({
                 url: href,
                 success: function (){location.reload(true);}
              });
-         }
+        }
+
     </script>
 </head>
 <body>
 <form id="main_form">
+    <h3>
+        <a href="/schedule/" class="std_button">Аналитика</a>
+        <a href="/conflicts/" class="std_button">Конфликты</a>
+        <a href="/0" class="std_button">Таблицы</a>
+        <br>
+    </h3>
     <input type="hidden" name="p_change_flag" id="p_ch_flag" value="{{ p_change_flag }}">
     <input type="hidden" name="header_view" id="header_view_id" value="{{ header_view }}">
     <select name="x" id="sel_x_id">
@@ -137,12 +163,16 @@
                 {{ key }}
             </th>
             {% for value in dict.values() %}
-                <th class="main_th" ondrop="drop(event)" ondragover="allowDrop(event)"><br>
+                <th class="main_th" ondrop="drop(event)" ondragover="allowDrop(event)" c="{{sel_x}}" r="{{sel_y}}"
+                    cval="{{key}}" rval="{{headers[loop.index0]}}"><br>
                     <button onclick="window.open('/4/add/?col={{sel_x}}&row={{sel_y}}&row_value={{key}}&col_value={{headers[loop.index0]}}'); return false;">
                         Добавить карточку</button><br><br>
                     {% if not value is none %}
                         {% for list in value %}
-                            <div draggable="true" ondragstart="drag(event)" ondblclick="window.open('/4/modify/{{list[0]}}'); return false;">
+                            <div {% if not list == value[0] %}  class="card_block {% if list[0] in conflictingIDs %} conf{% endif %}" hidden {% endif %}
+                                 {% if list[0] in conflictingIDs %}class="conf"{% endif %}
+                                 draggable="true" ondragstart="drag(event)"
+                                 ondblclick="window.open('/4/modify/{{list[0]}}'); return false;" id="{{list[0]}}">
                                 <table class="card">
                                     {% for i in col_indexes %}
                                         {% if projections[i] in showed_cols %}
@@ -169,6 +199,7 @@
                                 </table>
                             </div><br>
                         {% endfor %}
+                        {% if value|length > 1 %} <input type="button" class='btn_show' value="Развернуть">{% endif %}
                     {% endif %}
                 </th>
             {% endfor %}
