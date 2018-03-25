@@ -5,7 +5,7 @@ from sqlBuilder import *
 class BaseModel(metaclass=ABCMeta):
     class Columns:
         def get_col(self, col_name):
-            return getattr(self, col_name)
+            return getattr(self, col_name.lower())
 
         def get_titles(self):
             return [self.get_col(col).col_title for col in self.__dict__]
@@ -19,13 +19,16 @@ class BaseModel(metaclass=ABCMeta):
         def get_col_names(self, table_name):
             return [self.get_col(col).get_col_name(table_name) for col in self.__dict__]
 
+        def get_keys(self):
+            return self.__dict__.keys()
+
     def __init__(self, table_name, title):
         self.table_name = table_name
         self.title = title
         self.columns = self.Columns()
         self.sql_builder = SQLBuilder(self)
 
-    def build_base_sql(self, sort_by_col, sort_type='inc'):
+    def build_base_sql(self, sort_by_col='id', sort_type='inc'):
         self.sql_builder.clear_fields()
         self.sql_builder.set_fields()
         self.sql_builder.set_from_table()
@@ -33,7 +36,23 @@ class BaseModel(metaclass=ABCMeta):
         self.sql_builder.add_sort_type(sort_type)
 
     @abstractmethod
-    def fetch_all(self, sort_by_col, sort_type='inc'):
+    def fetch_all(self, *fields):
+        self.sql_builder.clear_fields()
+        if fields.__len__() > 0:
+            fields = [field for field in fields]
+            self.sql_builder.set_fields(fields, name=False)
+        else:
+            self.sql_builder.set_fields(self.columns.get_cols_without_id(), name=False)
+        self.sql_builder.set_from_table()
+
+    @abstractmethod
+    def fetch_one(self, id):
+        self.sql_builder.clear_fields()
+        self.sql_builder.set_fields(self.columns.get_cols_without_id(), name=False)
+        self.sql_builder.set_from_table()
+
+    @abstractmethod
+    def fetch_all_names(self, sort_by_col, sort_type):
         self.build_base_sql(sort_by_col, sort_type)
 
     @abstractmethod
@@ -59,8 +78,8 @@ class NamedModel(BaseModel):
             return getattr(self.columns, 'order_number').get_col_name(self.table_name)
         return getattr(self.columns, col_name).get_col_name(self.table_name)
 
-    def fetch_all(self, sort_by_col, sort_type='inc'):
-        BaseModel.fetch_all(self, sort_by_col, sort_type)
+    def fetch_all_names(self, sort_by_col='id', sort_type='inc'):
+        BaseModel.fetch_all_names(self, sort_by_col, sort_type)
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql())
         return cur.fetchall()
@@ -70,6 +89,19 @@ class NamedModel(BaseModel):
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
         return cur.fetchall()
+
+    def fetch_all(self, *fields):
+        BaseModel.fetch_all(self, *fields)
+        print(self.sql_builder.get_sql())
+        cur.execute(self.sql_builder.get_sql())
+        return cur.fetchall()
+
+    def fetch_one(self, id):
+        BaseModel.fetch_all(self)
+        self.sql_builder.add_where_col_names('id')
+        self.sql_builder.add_operators('=')
+        cur.execute(self.sql_builder.get_sql(), get_list(id))
+        return cur.fetchone()
 
 
 class RefModel(BaseModel):
@@ -81,13 +113,14 @@ class RefModel(BaseModel):
         return self.columns.get_col(col).get_col_name(self.table_name)
 
     def get_tab_col_for_sort(self, col):
+        print(self.columns.__dict__)
         if isinstance(self.columns.get_col(col), ReferenceField) and \
                         'order_number' in self.columns.get_col(col).source.columns.__dict__:
             return self.columns.get_col(col).source.get_tab_col('order_number')
         return self.columns.get_col(col).get_col_name(self.table_name)
 
-    def fetch_all(self, sort_by_col='id', sort_type='inc'):
-        BaseModel.fetch_all(self, sort_by_col, sort_type)
+    def fetch_all_names(self, sort_by_col='id', sort_type='inc'):
+        BaseModel.fetch_all_names(self, sort_by_col, sort_type)
         self.sql_builder.add_l_joins()
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql())
@@ -99,6 +132,19 @@ class RefModel(BaseModel):
         print(self.sql_builder.get_sql())
         cur.execute(self.sql_builder.get_sql(), params)
         return cur.fetchall()
+
+    def fetch_all(self, *fields):
+        BaseModel.fetch_all(self, *fields)
+        cur.execute(self.sql_builder.get_sql())
+        print(self.sql_builder.get_sql())
+        return cur.fetchall()
+
+    def fetch_one(self, id):
+        BaseModel.fetch_all(self)
+        self.sql_builder.add_where_col_names('id')
+        self.sql_builder.add_operators('=')
+        cur.execute(self.sql_builder.get_sql(), get_list(id))
+        return cur.fetchone()
 
 
 class Audiences(NamedModel):

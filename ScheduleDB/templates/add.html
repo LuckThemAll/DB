@@ -19,15 +19,15 @@
             <tr>
             {% for option in options %}
                 <th>
-                    {% if options[option] == 'none' %}
+                    {% if options[option] == None %}
                         <input name="p" type="text">
                     {% else %}
                     <select style="width: 130px" name="p">
-                        <option selected></option>
-                        {% for item in options[option]['values'] %}
-                            <option {% if titles[options[option]['index']] == f_olap_row and item[0] == f_olap_row_val%} selected {%endif%}
-                                    {% if titles[options[option]['index']] == f_olap_col and item[0] == f_olap_col_val%} selected {%endif%}>
-                                {{ item[0] }}</option>
+                        <option></option>
+                        {% for row in options[option]['val'] %}
+                            <option {% if options[option]['index'] == f_olap_col and options[option]['val'][row] == f_olap_col_val %} selected {% endif %}
+                        {% if options[option]['index'] == f_olap_row and options[option]['val'][row] == f_olap_row_val %} selected {% endif %}
+                        value="{{ row }}">{{ options[option]['val'][row] }}</option>
                         {% endfor %}
                         </select>
                     {% endif %}

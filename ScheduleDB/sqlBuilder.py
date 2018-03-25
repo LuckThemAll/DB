@@ -28,7 +28,10 @@ class SQLBuilder:
         self.logic_operator = ''
         self.sort_type = 'inc'
 
-    def set_fields(self, *fields, name=True):
+    def set_fields(self, *fields, name=True, only_insert=False):
+        if only_insert:
+            [self.fields.append(col) for col in fields]
+            return
         if not fields:
             [self.fields.append(col) for col in self.table.columns.get_col_names(self.table_name)]
         else:
@@ -81,6 +84,23 @@ class SQLBuilder:
                 self.sql += 'desc'
         return self.sql
 
+    def set_schedule_view(self):
+        self.clear_fields()
+        cols = self.table.columns
+        temp_fields = []
+        for item in cols.__dict__:
+            if isinstance(cols.get_col(item), ReferenceField):
+                field = (cols.get_col(item).source.table_name + '.' + cols.get_col(item).field + ',' +
+                         self.table.table_name + '.' + item)
+            else:
+                field = (self.table.table_name + '.' + item)
+            temp_fields.append(field)
+        self.set_fields(temp_fields, only_insert=True)
+        self.fields = self.fields[0]
+        self.add_l_joins()
+        self.set_from_table()
+        return
+
     def get_insert(self, fields, table=None, data=None, is_conflict = False):
         if not is_conflict:
             sql = 'INSERT INTO {0}({1}) VALUES ({2});'.format(self.table_name, ','.join(fields), ','.join('?'*len(fields)))
@@ -120,11 +140,18 @@ class SQLBuilder:
         self.clear_fields()
         return sql
 
-    def get_conflicting_ids(self):
+    @staticmethod
+    def get_options(table_name, col):
+        sql = 'select ' + table_name + '.id, ' + col + ' from ' + table_name
+        return sql
+
+    @staticmethod
+    def get_conflicting_ids():
         sql = 'SELECT c.SCHED_ITEM_ID FROM CONFLICTS c'
         return sql
 
-    def create_conflict(self, fields):
+    @staticmethod
+    def create_conflict(fields):
         sql = 'select ID,'
         sql += ','.join('t1.' + field for field in fields)
         sql += ' from SCHED_ITEMS t1 where exists (select * from SCHED_ITEMS t2 where '

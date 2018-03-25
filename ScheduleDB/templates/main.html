@@ -7,6 +7,7 @@
         function delete_param(div_id, p_count_id){
             p_count_id.value = p_count_id.value - 1;
             div_id.remove();
+            document.getElementById('main_form').submit();
         }
 
         function change_sort_type(h_sort_type_id, h_sort_by_col_id, col_index, main_form_id){
@@ -63,7 +64,6 @@
         </div>
         <div style="padding: 3px">
             {% if search_data.params_count >= 1%}
-            <input type="submit" value="Найти">
             <input type="submit" value="➕" onclick="params_count.value = {{search_data.params_count + 1}}">
             <select name="lo">
                 {% for operator in logic_operators %}
@@ -75,18 +75,13 @@
                 <input type="submit" value="➕" onclick="params_count.value = {{search_data.params_count + 1}}">
             {%endif%}
         </div>
-        <div style="padding: 3px">
+        <div>
             <input type="submit" value="Показать">
             <input type="number" name="recs_on_page" min="1" max="10000" value={{ paging.recs_on_page }}>
             Страницы:
             {% for page in range(paging.pages_count) %}
-                <a {% if page+1 == paging.current_page %} style="border: 1px solid black" {% endif %}
-                    href = {{ change_arg("current_page",  page + 1) }}>
-                    {% if page+1 == paging.current_page %}
-                        <strong>{{ page + 1 }}</strong>
-                    {% else %}
-                        {{ page + 1 }}
-                    {% endif %}</a>
+                <a {% if page+1 == paging.current_page %} class="cur_page" {% endif %}
+                    href = {{ change_arg("current_page",  page + 1) }}>{{ page + 1 }}</a>
             {% endfor %}<br>
             <input type="button" onclick="window.open('./add')" value="Добавить запись" >
             <input type="button" onclick="window.open('/schedule')" value="Просмотреть расписание" >

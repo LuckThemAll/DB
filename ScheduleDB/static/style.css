@@ -8,65 +8,48 @@
 a{
     text-decoration: none;
 }
+
 a:hover{
     text-decoration: underline;
 }
 
-TABLE {
-    border-collapse: collapse;
-    border: 2px solid black;
-}
-
 .main_table{
-    border: 2px solid black;
-}
-
-.card{
-    border: 2px solid #377DBF;
-    border-left: none;
-    border-right: none;
-    border-bottom: 3px solid #377DBF;
-}
-
-TH{
-    font-size: 10pt;
+    border: 1px solid black;
+    border-collapse: collapse;
 }
 
 .main_th{
+    border: 1px solid black;
+    padding: 0px 7px;
     vertical-align: top;
-    background: white;
-    border: 2px solid black;
-}
-
-.main_header{
-    font: 15pt sans-serif;
-    background: #C0C0C0;
-    border: 2px solid black;
 }
 
 .card_header{
     font: 12pt times;
     text-align: left;
-    background: white;
-    border-right: 1px solid black;
 }
 
-.card_record{
+.card_block{
+    border-top: 2px solid blue;
+    border-bottom: 2px solid blue;
+    vertical-align: top;
+    margin: 3px;
+    margin-top: 3px
+}
+
+.hidden{
+    visibility: collapse;
+}
+
+.cur_page{
+    border: 1px solid black;
     padding: 3px;
-    font-size: 16px;
-    text-align: left;
-}
-
-.card{
-}
-
-.actions{
-    font-size: 12pt
+    padding-top: 1px;
+    padding-bottom: 1px
 }
 
 .conf{
-    border: 4px solid blue;
-    margin: 5px
+    border: 3px solid red
 }
 
 

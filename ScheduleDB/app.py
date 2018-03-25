@@ -23,8 +23,8 @@ class Paging:
         self.recs_count = len(records)
         self.pages_count = int(ceil(self.recs_count / self.recs_on_page))
         self.current_page = request.args.get('current_page', 1, type=int)
-        if self.current_page not in range(self.pages_count):
-            self.page = 1
+        if self.current_page not in range(self.pages_count+1):
+            self.current_page = 1
 
     def select_recs(self, records):
         start = (self.current_page - 1) * self.recs_on_page
@@ -34,6 +34,7 @@ class Paging:
 class TemplateData:
     def __init__(self):
         self.tables = tables
+        self.table = None
 
 
 operators = {
@@ -73,8 +74,8 @@ def index(selected_table_index=0):
         data.delId = request.args.get('delid', -1, type=int)
         if data.delId != -1:
             sql = SQLBuilder(selected_table)
-            try: cur.execute(sql.get_delete(), get_list(data.delId))
-            except: data.delId = -1
+            cur.execute(sql.get_delete(), get_list(data.delId))
+            data.delId = -1
 
         data.sort_by_col = request.args.get('sort_by_col', 0)
         data.sort_type = request.args.get('sort_type', 'inc', type=str)
@@ -102,66 +103,52 @@ def index(selected_table_index=0):
             data.records = p.select_recs(recs)
 
         else:
-            recs = data.records = selected_table.fetch_all(sort_by_col_name, data.sort_type)
+            recs = data.records = selected_table.fetch_all_names(sort_by_col_name, data.sort_type)
             data.paging = Paging(recs)
             data.records = data.paging.select_recs(recs)
         return render_template('main.html', **data.__dict__)
 
 
+def get_all_options(data):
+    columns = data.table.columns
+    result = {}
+    for i, col in enumerate(data.table.columns.__dict__):
+        if type(columns.get_col(col)) is ReferenceField:
+            sql = SQLBuilder.get_options(
+                        columns.get_col(col).source.table_name,
+                        columns.get_col(col).get_col_name(data.table.table_name))
+            result[col] = {}
+            result[col]['val'] = {}
+            for row in cur.execute(sql):
+                result[col]['val'][row[0]] = row[1]
+                result[col]['index'] = i-1
+        elif col != 'id':
+            result[col] = None
+    return result
+
+
+def correct_values(values):
+    for i, item in enumerate(values):
+        if item == '':
+            values[i] = None
+
+
 @app.route('/<int:selected_table_index>/add/')
 def add_record(selected_table_index=0):
-    def set_options():
-        data.options = {}
-        i=-1
-        for key, val in selected_table.columns.__dict__.items():
-            if isinstance(val, ReferenceField):
-                sql = SQLBuilder(selected_table.columns.get_col(key).source)
-                sql.clear_fields()
-                sql.set_fields('name')
-                sql.set_from_table()
-                sql.add_l_joins()
-                cur.execute(sql.get_sql())
-                data.options[key] = {}
-                data.options[key]['index'] = i
-                data.options[key]['values'] = cur.fetchall()
-            elif key != 'id':
-                data.options[key] = 'none'
-            i+=1
-
-    def refs_to_source_id(fields):
-        if is_correct_fields(fields):
-            for i, col in enumerate(selected_table.columns.get_cols_without_id()):
-                if isinstance(selected_table.columns.get_col(col), ReferenceField):
-                    if params[i] == '':
-                        params[i] = None
-                        continue
-                    sql = SQLBuilder(selected_table.columns.get_col(col).source)
-                    sql.clear_fields()
-                    sql.set_fields('id')
-                    sql.set_from_table()
-                    sql.add_where_col_names('name')
-                    sql.add_operators('=')
-                    cur.execute(sql.get_sql(), get_list(fields[i]))
-                    fields[i] = int(cur.fetchall()[0][0])
-        return fields
-
-    data = TemplateData()
-    f_olap_col = request.args.get('col', 'none')
-    data.f_olap_row_val = request.args.get('row_value', 'none')
-    f_olap_row = request.args.get('row', 'none')
-    data.f_olap_col_val = request.args.get('col_value', 'none')
-    data.f_olap_col = max(f_olap_row, f_olap_col)
-    data.f_olap_row = min(f_olap_row, f_olap_col)
-    selected_table = tables[selected_table_index]
-    data.titles = selected_table.columns.get_titles_without_id()
-    set_options()
-    new_values = params = request.args.getlist("p")
-    params = refs_to_source_id(params)
-
+    data = TemplateData
+    data.f_olap_col = request.args.get('col', None, type=int)
+    data.f_olap_row = request.args.get('row', None, type=int)
+    data.f_olap_col_val = request.args.get('col_value', None, type=str)
+    data.f_olap_row_val = request.args.get('row_value', None, type=str)
+    data.table = tables[selected_table_index]
+    data.values = data.table.fetch_all()
+    data.titles = data.table.columns.get_titles_without_id()
+    data.options = get_all_options(data)
+    new_values = request.args.getlist("p")
+    correct_values(new_values)
     if is_correct_fields(new_values):
-        sql = SQLBuilder(selected_table)
-        print(sql.get_insert(selected_table.columns.get_cols_without_id()), params)
-        cur.execute(sql.get_insert(selected_table.columns.get_cols_without_id()), params)
+        sql = SQLBuilder(data.table)
+        cur.execute(sql.get_insert(data.table.columns.get_cols_without_id()), new_values)
     cur.transaction.commit()
     update_conflicts()
     return render_template('add.html', **data.__dict__)
@@ -169,203 +156,139 @@ def add_record(selected_table_index=0):
 
 @app.route('/<int:selected_table_index>/modify/<int:rec_id>/')
 def modify(selected_table_index=0, rec_id=0):
-    data = TemplateData()
-
-    f_olap_col = request.args.get('c', 'none')
-    data.f_olap_row_val = request.args.get('rval', 'none')
-    f_olap_row = request.args.get('r', 'none')
-    data.f_olap_col_val = request.args.get('cval', 'none')
-
-    data.olap_is_drop = request.args.get('is_drop', 'false')
-
-    data.f_olap_col = min(f_olap_row, f_olap_col)
-    data.f_olap_row = max(f_olap_row, f_olap_col)
-
-    data.id = rec_id
-    selected_table = tables[selected_table_index]
-    data.titles = selected_table.columns.get_titles_without_id()
-    data.current_values = {}
-
-    def set_options():
-        data.options = {}
-        i=-1
-        for key, val in selected_table.columns.__dict__.items():
-            if isinstance(val, ReferenceField):
-                sql = SQLBuilder(selected_table.columns.get_col(key).source)
-                sql.clear_fields()
-                sql.set_fields('name')
-                sql.set_from_table()
-                sql.add_l_joins()
-                cur.execute(sql.get_sql())
-                data.options[key] = {}
-                data.options[key]['index'] = i
-                data.options[key]['values'] = cur.fetchall()
-            elif key != 'id':
-                sql = SQLBuilder(selected_table)
-                sql.clear_fields()
-                sql.set_from_table()
-                sql.set_fields('name')
-                sql.add_where_col_names('id')
-                sql.add_operators('=')
-                print(sql.get_sql(), get_list(rec_id))
-                cur.execute(sql.get_sql(), get_list(rec_id))
-                data.options[key] = 'none'
-            i+=1
-
-    def save_current_values():
-        for key, val in selected_table.columns.__dict__.items():
-            if isinstance(val, ReferenceField):
-                sql = SQLBuilder(selected_table)
-                sql.clear_fields()
-                sql.set_fields(key, name=False)
-                sql.set_from_table()
-                sql.add_where_col_names('id')
-                sql.add_operators('=')
-                cur.execute(sql.get_sql(), get_list(data.id))
-                col_id = cur.fetchone()
-
-                sql = SQLBuilder(selected_table.columns.get_col(key).source)
-                sql.clear_fields()
-                sql.set_fields('name')
-                sql.set_from_table()
-                sql.add_l_joins()
-                sql.add_where_col_names('id')
-                sql.add_operators('=')
-                cur.execute(sql.get_sql(), col_id)
-                col_name = cur.fetchall()
-                data.current_values[key] = col_name if len(col_name) > 0 else 'none'
-
-            elif key != 'id':
-                sql = SQLBuilder(selected_table)
-                sql.clear_fields()
-                sql.set_fields(key)
-                sql.set_from_table()
-                sql.add_where_col_names('id')
-                sql.add_operators('=')
-                cur.execute(sql.get_sql(), (data.id,))
-                data.current_values[key] = cur.fetchall()
-
-    def refs_to_source_id():
-        if is_correct_fields(params):
-            for i, col in enumerate(selected_table.columns.get_cols_without_id()):
-                if isinstance(selected_table.columns.get_col(col), ReferenceField):
-                    if params[i] == '':
-                        params[i] = None
-                        continue
-                    sql = SQLBuilder(selected_table.columns.get_col(col).source)
-                    sql.clear_fields()
-                    sql.set_fields('id')
-                    sql.set_from_table()
-                    sql.add_where_col_names('name')
-                    sql.add_operators('=')
-                    try:
-                        cur.execute(sql.get_sql(), (params[i],))
-                        params[i] = cur.fetchall()[0][0]
-                    except:
-                        try:
-                            cur.execute(sql.get_sql(), (params[i]['1'],))
-                            params[i] = cur.fetchall()[0][0]
-                        except:
-                            try:
-                                cur.execute(sql.get_sql(), (params[i]['2'],))
-                                params[i] = cur.fetchall()[0][0]
-                            except:
-                                params[i] = None
-
-    set_options()
-    save_current_values()
-    if data.olap_is_drop == 'true':
-        for key in data.current_values:
-            if data.current_values[key] != 'none':
-                data.current_values[key] = data.current_values[key][0][0]
-            if (selected_table.columns.get_col(key).col_title == data.f_olap_row or
-                selected_table.columns.get_col(key).col_title == data.f_olap_col):
-                data.current_values[key] = {}
-                data.current_values[key]['1'] = data.f_olap_col_val
-                data.current_values[key]['2'] = data.f_olap_row_val
-        params = [item for key, item in data.current_values.items()]
-        refs_to_source_id()
-    else:
-        params = request.args.getlist("p")
-        refs_to_source_id()
-
-    if is_correct_fields(params):
-        sql = SQLBuilder(selected_table)
-        cols = selected_table.columns.get_cols_without_id()
-        params.append(rec_id)
-        cur.execute(sql.get_update(cols), params)
-
+    data = TemplateData
+    data.table = tables[selected_table_index]
+    data.values = data.table.fetch_all()
+    data.titles = data.table.columns.get_titles_without_id()
+    data.options = get_all_options(data)
+    data.current_values = data.table.fetch_one(rec_id)
+    new_values = request.args.getlist("p")
+    correct_values(new_values)
+    if is_correct_fields(new_values):
+        sql = SQLBuilder(data.table)
+        cols = data.table.columns.get_cols_without_id()
+        new_values.append(rec_id)
+        cur.execute(sql.get_update(cols), new_values)
+        data.current_values = data.table.fetch_one(rec_id)
     cur.transaction.commit()
     update_conflicts()
-    save_current_values()
     return render_template('modify.html', **data.__dict__)
 
+
+@app.route('/schedule/dad/<int:rec_id>/')
+def drop(rec_id=0):
+    table = SchedItems()
+    cols = table.columns.get_cols_without_id()
+    vals = []
+    [vals.append(item) for item in table.fetch_one(rec_id)]
+    x_proj = request.args.get("x_proj")
+    y_proj = request.args.get("y_proj")
+    new_x_proj = request.args.get("new_x_proj")
+    new_y_proj = request.args.get("new_y_proj")
+    vals[int(x_proj)] = new_x_proj
+    vals[int(y_proj)] = new_y_proj
+    vals.append(rec_id)
+    s = SQLBuilder(table)
+    cur.execute(s.get_update(cols), vals)
+    cur.transaction.commit()
+    update_conflicts()
+    return '1'
 
 @app.route('/schedule/')
 def view_schedule():
     data = TemplateData()
     table = SchedItems()
+
     data.delId = request.args.get('delid', -1, type=int)
     if data.delId != -1:
         sql = SQLBuilder(table)
-        try:
-            cur.execute(sql.get_delete(), get_list(data.delId))
-            update_conflicts()
-        except:
-            data.delId = -1
-    data.projections = table.columns.get_titles_without_id()
+        cur.execute(sql.get_delete(), get_list(data.delId))
+        update_conflicts()
+        data.delId = -1
 
-    data.sel_x = request.args.get('x', 'Группа')
-    data.sel_y = request.args.get('y', 'День недели')
-    data.col_indexes = []
-    [data.col_indexes.append(data.projections.index(name)) for name in data.projections if request.args.get(name, 1, type=int)]
-    data.sel_x_index = min(data.projections.index(data.sel_x), data.projections.index(data.sel_y))
-    data.sel_y_index = max(data.projections.index(data.sel_x), data.projections.index(data.sel_y))
-    data.cols_without_id = table.columns.get_cols_without_id()
+    data.projections = {}
+    for i, item in enumerate(table.columns.get_cols_without_id()):
+        data.projections[i] = table.columns.get_col(item).col_title
 
-    data.showed_cols = request.args.getlist('shw_cls')
+    data.sel_y = request.args.get('y', 0, type=int)
+    data.sel_x = request.args.get('x', 6, type=int)
+
+    meta = []
+    [meta.append(item) for item in table.columns.__dict__]
+    meta.pop(0)
+    rows = table.columns.get_col(meta[data.sel_x]).source.fetch_all('ID', 'NAME')
+    rows.append((None, None))
+    cols = table.columns.get_col(meta[data.sel_y]).source.fetch_all('ID', 'NAME')
+    cols.append((None, None))
+
+    viewed_table = dict.fromkeys([(col[1], col[0]) for col in cols])
+    for col in viewed_table:
+        viewed_table[col] = dict.fromkeys([(row[1], row[0]) for row in rows])
+
+    data.search_col_names = [item for item in table.columns.__dict__]
+    data.search_data = SearchParameters(table)
+    data.logic_operator = None
+    data.sort_type = None
+
+    rows_name = []
+    rows_id = []
+    s = SQLBuilder(table)
+    s.set_schedule_view()
+    data.logic_operator = request.args.get('lo', 'and')
     data.p_change_flag = request.args.get('p_change_flag', 'true', type=str)
     data.header_view = request.args.get('header_view', 'true')
+    data.operators = operators
 
-    data.sort_by_col = data.sel_y_index
-    data.sort_type = 'inc'
-    data.logic_operator = request.args.get('lo', 'and')
-    data.search_data = SearchParameters(table)
-    data.search_data.search_col_names = [table.columns.get_col(item).col_title for item in table.columns.get_cols_without_id()]
+    data.showed_cols = request.args.getlist('shw_cls')
+
     if data.p_change_flag == 'true':
         data.showed_cols = []
         [data.showed_cols.append(item) for item in data.search_data.search_col_names]
-        del data.showed_cols[data.sel_y_index]
-        del data.showed_cols[data.sel_x_index]
-    data.operators = operators
-    data.logic_operators = logic_operators
-    search_col_names = [item for item in table.columns.__dict__]
-    ops = [operators[item] for item in data.search_data.operators]
-    sort_by_col_name = data.cols_without_id[data.sel_y_index]
-    data.rows = table.fetch_all_by_params(
-                [search_col_names[int(item)] for item in data.search_data.selected_col_name_indexes],
-                data.search_data.search_params,
-                ops,
-                data.logic_operator,
-                sort_by_col_name,
-                data.sort_type)
-    data.rows = [list(row) for row in data.rows]
-    for row in data.rows:
-        if row[data.sel_x_index + 1] == None:
-            row[data.sel_x_index + 1] = 'None'
-    data.viewed_table = dict.fromkeys(sorted([row[data.sel_x_index + 1] for row in data.rows]))
-    data.headers = []
-    for col in data.rows:
-        if col[data.sel_y_index + 1] not in data.headers:
-            data.headers.append(col[data.sel_y_index + 1])
-    for col in data.viewed_table:
-        data.viewed_table[col] = dict.fromkeys([col[data.sel_y_index + 1] for col in data.rows])
-    for row in data.rows:
-        if not data.viewed_table[row[data.sel_x_index + 1]][row[data.sel_y_index + 1]]:
-            data.viewed_table[row[data.sel_x_index + 1]][row[data.sel_y_index + 1]] = [row]
+        if data.sel_y != data.sel_x:
+            del data.showed_cols[max(data.sel_y+1, data.sel_x+1)]
+            del data.showed_cols[min(data.sel_y+1, data.sel_x+1)]
         else:
-            data.viewed_table[row[data.sel_x_index + 1]][row[data.sel_y_index + 1]].append(row)
-    query = SQLBuilder.get_conflicting_ids(SQLBuilder(table))
+            del data.showed_cols[data.sel_y]
+
+    data.search_data = SearchParameters(table)
+    if data.search_data.search_params:
+        a = []
+        for item in table.columns.__dict__:
+            a.append(item)
+        col_names = []
+        for item in data.search_data.selected_col_name_indexes:
+            col_names.append(a[int(item)-1])
+        s.add_logic_operator('OR')
+        data.operators = [item for item in operators.keys()]
+        ops = [operators[item] for item in data.search_data.operators]
+        s.add_operators(ops)
+        s.add_where_col_names(col_names)
+        cur.execute(s.get_sql(), get_list(data.search_data.search_params))
+    else:
+        cur.execute(s.get_sql())
+    rows = cur.fetchall()
+    for row in rows:
+        rows_name.append([])
+        rows_id.append([row[0]])
+        for i in range(len(row)):
+            rows_name[-1].append(row[i]) if i == 0 or i % 2 else rows_id[-1].append(row[i])
+
+    for i in range(len(rows_name)):
+        for j in range(len(rows_name[i])):
+            rows_name[i][j] = (rows_name[i][j], rows_id[i][j])
+
+    rows = rows_name
+    for row in rows:
+        if viewed_table[row[data.sel_y + 1]][row[data.sel_x + 1]] is None:
+            viewed_table[row[data.sel_y + 1]][row[data.sel_x + 1]] = [row]
+        else:
+            viewed_table[row[data.sel_y + 1]][row[data.sel_x + 1]].append(row)
+
+    data.col_indexes = []
+    [data.col_indexes.append(i) for i in range(data.projections.__len__())]
+
+    data.viewed_table = viewed_table
+    query = SQLBuilder.get_conflicting_ids()
     cur.execute(query)
     data.conflictingIDs = [item[0] for item in cur.fetchall()]
     return render_template('schedule.html', **data.__dict__)

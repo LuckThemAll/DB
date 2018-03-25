@@ -7,16 +7,16 @@
     <title>Title</title>
     <script>
         $(document).ready(function(){
-        console.log('aa');
             $('.btn_show').click(function() {
-                console.log('aa');
                 var $cards = $(this).parent().children('.card_block');
-                if ($cards.attr('hidden')) {
-                    $cards.removeAttr('hidden');
-                    $(this).val('Свернуть');
-                } else {
-                    $cards.attr('hidden', 0);
+                console.log('ddd')
+                if ($(this).val() == 'Свернуть'){
+                    $cards.slice(1).css('visibility', 'collapse');
                     $(this).val('Развернуть');
+                }
+                else{
+                    $cards.css('visibility', 'visible');
+                    $(this).val('Свернуть');
                 }
             });
         });
@@ -55,8 +55,7 @@
                 header_view.value = 'true'
             }
         }
-        </script>
-        <script>
+
         function allowDrop(ev) {
              ev.preventDefault();
         }
@@ -68,8 +67,12 @@
         function drop(ev) {
              ev.preventDefault();
              var data = ev.dataTransfer.getData("id");
-             href = "/4/modify/"+data+"/?cval="+ev.target.getAttribute('cval')+"&rval="+ev.target.getAttribute('rval')+"&c="+
-             ev.target.getAttribute('c')+"&r="+ev.target.getAttribute('r')+"&is_drop=true"
+             href = "/schedule/dad/" + data + "/"
+             var params = "?x_proj=" + document.getElementById('x_proj_id').value
+             params += "&y_proj=" + document.getElementById('y_proj_id').value
+             params += "&new_y_proj=" + ev.target.getAttribute('cval')
+             params += "&new_x_proj=" + ev.target.getAttribute('rval')
+             href += params
              $.ajax({
                 url: href,
                 success: function (){location.reload(true);}
@@ -88,15 +91,17 @@
     </h3>
     <input type="hidden" name="p_change_flag" id="p_ch_flag" value="{{ p_change_flag }}">
     <input type="hidden" name="header_view" id="header_view_id" value="{{ header_view }}">
+    <input type="hidden" id="x_proj_id" value="{{sel_x}}">
+    <input type="hidden" id="y_proj_id" value="{{sel_y}}">
     <select name="x" id="sel_x_id">
         {% for item in projections %}
-            <option  {% if item == sel_x %} selected {% endif %}> {{ item }} </option>
+            <option  value="{{ item }}" {% if item == sel_x %} selected {% endif %}> {{ projections[item] }} </option>
         {% endfor %}
     </select>
 
     <select name="y" id="sel_y_id">
         {% for item in projections %}
-            <option  {% if item == sel_y %} selected {% endif %}> {{ item }} </option>
+            <option  value="{{ item }}" {% if item == sel_y %} selected {% endif %}> {{ projections[item] }} </option>
         {% endfor %}
     </select>
     <button type="button" onclick="a(main_form, sel_x_id, sel_y_id, '{{sel_x}}', '{{sel_y}}')">Показать</button><br>
@@ -127,11 +132,6 @@
     <div style="padding: 3px">
         {% if search_data.params_count >= 1%}
         <input type="submit" value="➕" onclick="params_count.value = {{search_data.params_count + 1}}">
-        <select name="lo">
-            {% for operator in logic_operators %}
-                <option {% if logic_operator == operator %} selected {% endif %}>{{ operator }}</option>
-            {% endfor %}
-        </select>
         <br>
         {% else %}
             <input type="submit" value="➕" onclick="params_count.value = {{search_data.params_count + 1}}">
@@ -139,67 +139,70 @@
     </div>
     <a>Показать:</a><br>
     {% for col in search_data.search_col_names %}
-        <input type="checkbox" name="shw_cls" value="{{col}}"
-            {% if col in showed_cols %} checked {% endif %}>
-        <a>{{col}}</a><br>
+        {% if col != 'ID' %}
+            <input type="checkbox" name="shw_cls" value="{{col}}"
+                {% if col in showed_cols %} checked {% endif %}>
+            <a>{{col}}</a><br>
+        {% endif %}
     {% endfor%}
     <input id="header_change_btn" type="button"
            onclick="change_header_view('card_header', header_change_btn, header_view_id)"
            value="{% if header_view == 'true'%}Скрыть заголовки{% else %}Показать заголовки{% endif %}">
 <table class="main_table">
-    <tr>
-        <th></th>
+    <tr class="main_table">
+        <th class="main_table"></th>
         {% if viewed_table|length > 0 %}
             {% for key in viewed_table.copy().popitem()[1].keys() %}
-                <th class="main_header">
-                    {{ key }}
+                <th class="main_table">
+                    {{ key[0] }}
                 </th>
             {% endfor %}
         {% endif %}
     </tr>
-    {% for key, dict in viewed_table.items() %}
-        <tr class="main_tr">
-            <th class="main_header">
-                {{ key }}
+    {% for key1, dict in viewed_table.items()%}
+        <tr class="main_table">
+            <th class="main_table" style="width: 70px">
+                {{ key1[0] }}
             </th>
-            {% for value in dict.values() %}
-                <th class="main_th" ondrop="drop(event)" ondragover="allowDrop(event)" c="{{sel_x}}" r="{{sel_y}}"
-                    cval="{{key}}" rval="{{headers[loop.index0]}}"><br>
-                    <button onclick="window.open('/4/add/?col={{sel_x}}&row={{sel_y}}&row_value={{key}}&col_value={{headers[loop.index0]}}'); return false;">
+            {% for key2, value in dict.items() %}
+                <th class="main_th" ondrop="drop(event)" ondragover="allowDrop(event)"
+                    cval="{{key1[1]}}" rval="{{key2[1]}}"><br>
+                    <button onclick="window.open('/4/add/?col={{sel_x}}&row={{sel_y}}&row_value={{key1[0]}}&col_value={{key2[0]}}'); return false;">
                         Добавить карточку</button><br><br>
                     {% if not value is none %}
                         {% for list in value %}
-                            <div {% if not list == value[0] %}  class="card_block {% if list[0] in conflictingIDs %} conf{% endif %}" hidden {% endif %}
-                                 {% if list[0] in conflictingIDs %}class="conf"{% endif %}
+                            <div class="card_block {% if list[0][0] in conflictingIDs %}conf {% endif %}"
+                                 {% if not list == value[0] %} style="visibility: collapse" {% endif %}
                                  draggable="true" ondragstart="drag(event)"
-                                 ondblclick="window.open('/4/modify/{{list[0]}}'); return false;" id="{{list[0]}}">
-                                <table class="card">
+                                 ondblclick="window.open('/4/modify/{{list[0]}}'); return false;" id="{{list[0][0]}}"
+                                 cval="{{key1[1]}}" rval="{{key2[1]}}">
+                                <table style="border-collapse: collapse">
                                     {% for i in col_indexes %}
                                         {% if projections[i] in showed_cols %}
-                                            <tr>
-                                                <th class="card_header"
-                                                    {% if header_view == 'false' %}hidden{% endif %}>
+                                            <tr style="border: 1px solid lightgray;">
+                                                <th style="border: 1px solid lightgray;" class="card_header"
+                                                    {% if header_view == 'false' %}hidden{% endif %} cval="{{key1[1]}}" rval="{{key2[1]}}">
                                                     {{ projections[i] }}
                                                 </th>
-                                                <th class="card_record">
-                                                    {% if list[i+1] == None %} {% else %} {{ list[i+1] }} {% endif%}
+                                                <th style="border: 1px solid lightgray; width: 150px; height: 35px;" cval="{{key1[1]}}" rval="{{key2[1]}}">
+                                                    {% if list[i+1][0] == None %} {% else %} {{ list[i+1][0] }} {% endif%}
                                                 </th>
                                             </tr>
                                         {% endif %}
                                     {% endfor %}
                                     <tr>
-                                        <th class="card_header" {% if header_view == 'false' %}hidden{% endif %} >
+                                        <th {% if header_view == 'false' %}hidden{% endif %} class="card_header">
                                             <a>Действия:</a>
                                         </th>
-                                        <th class="actions">
-                                            <a class="actions" target="_blank" href="/4/modify/{{list[0]}}">Редактировать</a><br>
-                                            <button type="submit" name="delid" value="{{list[0]}}">Удалить</button>
+                                        <th>
+                                            <a class="actions" target="_blank" href="/4/modify/{{list[0][0]}}">Редактировать</a><br>
+                                            <button type="submit" name="delid" value="{{list[0][0]}}" style="margin-bottom: 3px">Удалить</button>
                                         </th>
                                     </tr>
                                 </table>
-                            </div><br>
+                            </div>
                         {% endfor %}
-                        {% if value|length > 1 %} <input type="button" class='btn_show' value="Развернуть">{% endif %}
+                        {% if value|length > 1 %} <input type="button" class="btn_show" style="margin: 10px" value="Развернуть">{% endif %}
                     {% endif %}
                 </th>
             {% endfor %}
