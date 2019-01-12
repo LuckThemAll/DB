@@ -1,0 +1,34 @@
+{% extends "BaseAuth.html" %}
+{% block head %}
+    <script type="text/javascript">
+        $( document ).ready(function() {
+            console.log( "ready!" );
+            $('#login_field, #password_field').change(function() {
+                var log_btn = $('#login_button');
+                ($(this).val().length > 10) ? log_btn.attr('disabled', 'disabled') : log_btn.removeAttr('disabled');
+            });
+        });
+    </script>
+{% endblock %}
+{% block content %}
+    <section class="hero is-fullheight">
+        <div class="hero-body">
+            <div class="box">
+                <form>
+                    <div class="field">
+                        <div class="control">
+                            <input id="login_field" type="text" name="login" class="input" placeholder="Login">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <input id="password_field" type="text" name="password" class="input" placeholder="Password">
+                        </div>
+                    </div>
+                    <button id="login_button" class="button is-block is-info is-large is-fullwidth">Register</button>
+                </form>
+            </div>
+        </div>
+    </section>
+{% endblock %}

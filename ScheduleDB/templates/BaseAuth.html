@@ -1,0 +1,32 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="../static/css/auth_style.css">
+    <link rel="stylesheet" href="../static/css/bulma.css">
+    <script src="../static/js/jquery-3.3.1.min.js"></script>
+    {% block head %}
+    {% endblock %}
+</head>
+<body>
+    <nav class="level">
+        <div class="level-left">
+            <p class="level-item"><a href="/">Главная</a></p>
+            {% if login != '' %}
+                <p class="level-item"><a class="button" href="/userInfo">Профиль</a></p>
+                <p class="level-item"><a class="button is-outlined" href="/logout">Выход</a></p>
+            {% endif %}
+        </div>
+        <div class="level-right">
+            {% if login == '' %}
+                <p class="level-item"><a class="button is-success" href="/signIn">Вход</a></p>
+                <p class="level-item"><a class="button is-warning" href="/registration">Регистрация</a></p>
+            {% endif %}
+        </div>
+    </nav>
+        <form name="login-form" class="login-form" action="" method="post">
+            {% block content %}{% endblock %}
+        </form>
+</body>
+</html>

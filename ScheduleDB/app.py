@@ -330,3 +330,12 @@ def conflict(type_id=0):
     data.rows_list = data.conflicts_by_groups
     data.conflicts = conflicts
     return render_template("conflicts_page.html", **data.__dict__)
+
+
+@app.route("/registration/")
+def registration():
+    data = TemplateData()
+    if request.method == 'GET':
+        return render_template("registration.html", **data.__dict__)
+    # data.login = request.
+    return render_template("registration.html", **data.__dict__)
