@@ -5,7 +5,7 @@
   <link rel="stylesheet" href="static/style.css">
  </head>
  <body>
- <a href="/registration" style="float: right">Registration</a></br>
+ <a href="/registration" style="float: right" methods="GET">Registration</a></br>
  <menu class="top_menu">
          {% for table in tables %}
             <li><a href="/{{ loop.index0 }}">{{ table.title }}</a></li>

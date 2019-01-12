@@ -35,6 +35,7 @@ class TemplateData:
     def __init__(self):
         self.tables = tables
         self.table = None
+        self.login = ''
 
 
 operators = {
@@ -333,7 +334,7 @@ def conflict(type_id=0):
 
 
 @app.route("/registration/")
-def registration():
+def authentication():
     data = TemplateData()
     if request.method == 'GET':
         return render_template("registration.html", **data.__dict__)
