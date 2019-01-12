@@ -67,12 +67,25 @@
         function drop(ev) {
              ev.preventDefault();
              var data = ev.dataTransfer.getData("id");
-             href = "/schedule/dad/" + data + "/"
-             var params = "?x_proj=" + document.getElementById('x_proj_id').value
-             params += "&y_proj=" + document.getElementById('y_proj_id').value
-             params += "&new_y_proj=" + ev.target.getAttribute('cval')
-             params += "&new_x_proj=" + ev.target.getAttribute('rval')
-             href += params
+             href = "/schedule/dad/" + data + "/";
+             var params = "?x_proj=" + document.getElementById('x_proj_id').value;
+             params += "&y_proj=" + document.getElementById('y_proj_id').value;
+             if (ev.target.getAttribute('cval') == "None"){
+                params += "&new_y_proj=" + "null";
+             }
+             else{
+                params += "&new_y_proj=" + ev.target.getAttribute('cval');
+             }
+
+             if (ev.target.getAttribute('rval') == "None"){
+                params += "&new_x_proj=" + "null";
+             }
+             else{
+                params += "&new_x_proj=" + ev.target.getAttribute('rval');
+             }
+
+
+             href += params;
              $.ajax({
                 url: href,
                 success: function (){location.reload(true);}

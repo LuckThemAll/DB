@@ -23,7 +23,7 @@ class Paging:
         self.recs_count = len(records)
         self.pages_count = int(ceil(self.recs_count / self.recs_on_page))
         self.current_page = request.args.get('current_page', 1, type=int)
-        if self.current_page not in range(self.pages_count+1):
+        if self.current_page not in range(self.pages_count + 1):
             self.current_page = 1
 
     def select_recs(self, records):
@@ -84,7 +84,8 @@ def index(selected_table_index=0):
         data.logic_operators = logic_operators
         data.search_data = SearchParameters(selected_table)
         data.operators = [item for item in operators.keys()]
-        data.search_tables = [selected_table.columns.get_col(item).get_col_title() for item in selected_table.columns.__dict__]
+        data.search_tables = [selected_table.columns.get_col(item).get_col_title() for item in
+                              selected_table.columns.__dict__]
         data.headers = selected_table.columns.get_titles()
 
         search_col_names = [item for item in selected_table.columns.__dict__]
@@ -115,13 +116,13 @@ def get_all_options(data):
     for i, col in enumerate(data.table.columns.__dict__):
         if type(columns.get_col(col)) is ReferenceField:
             sql = SQLBuilder.get_options(
-                        columns.get_col(col).source.table_name,
-                        columns.get_col(col).get_col_name(data.table.table_name))
+                columns.get_col(col).source.table_name,
+                columns.get_col(col).get_col_name(data.table.table_name))
             result[col] = {}
             result[col]['val'] = {}
             for row in cur.execute(sql):
                 result[col]['val'][row[0]] = row[1]
-                result[col]['index'] = i-1
+                result[col]['index'] = i - 1
         elif col != 'id':
             result[col] = None
     return result
@@ -189,10 +190,14 @@ def drop(rec_id=0):
     vals[int(y_proj)] = new_y_proj
     vals.append(rec_id)
     s = SQLBuilder(table)
+    for i in range(vals.__len__()):
+        if vals[i] == "null":
+            vals[i] = None
     cur.execute(s.get_update(cols), vals)
     cur.transaction.commit()
     update_conflicts()
     return '1'
+
 
 @app.route('/schedule/')
 def view_schedule():
@@ -245,8 +250,8 @@ def view_schedule():
         data.showed_cols = []
         [data.showed_cols.append(item) for item in data.search_data.search_col_names]
         if data.sel_y != data.sel_x:
-            del data.showed_cols[max(data.sel_y+1, data.sel_x+1)]
-            del data.showed_cols[min(data.sel_y+1, data.sel_x+1)]
+            del data.showed_cols[max(data.sel_y + 1, data.sel_x + 1)]
+            del data.showed_cols[min(data.sel_y + 1, data.sel_x + 1)]
         else:
             del data.showed_cols[data.sel_y]
 
@@ -257,7 +262,7 @@ def view_schedule():
             a.append(item)
         col_names = []
         for item in data.search_data.selected_col_name_indexes:
-            col_names.append(a[int(item)-1])
+            col_names.append(a[int(item) - 1])
         s.add_logic_operator('OR')
         data.operators = [item for item in operators.keys()]
         ops = [operators[item] for item in data.search_data.operators]
@@ -310,6 +315,7 @@ def conflict(type_id=0):
         except:
             data.delId = -1
     query = SQLBuilder.get_conflict(SQLBuilder(SchedItems()), type_id)
+    print(query)
     cur.execute(query)
     data.rows = cur.fetchall()
     data.conflicts_by_groups = [[]]
