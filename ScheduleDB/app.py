@@ -4,6 +4,7 @@ from flask import request
 from werkzeug.urls import url_encode
 from math import ceil
 from conflicts import *
+import password_encoder
 
 app = Flask(__name__)
 
@@ -338,5 +339,7 @@ def authentication():
     data = TemplateData()
     if request.method == 'GET':
         return render_template("registration.html", **data.__dict__)
-    # data.login = request.
+    data.login = request.args.get("login", "", type=str)
+    enc = password_encoder.encoder(request.args.get("password", "", type=str))
+    # user =
     return render_template("registration.html", **data.__dict__)
