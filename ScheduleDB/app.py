@@ -1,10 +1,12 @@
-from flask import Flask
+from flask import Flask, make_response, redirect
 from flask import render_template
 from flask import request
 from werkzeug.urls import url_encode
 from math import ceil
 from conflicts import *
-import password_encoder
+import hashlib
+from user_repository import UserRepository
+from users import User
 
 app = Flask(__name__)
 
@@ -334,12 +336,30 @@ def conflict(type_id=0):
     return render_template("conflicts_page.html", **data.__dict__)
 
 
-@app.route("/registration/")
+@app.route("/registration/", methods=['GET', 'POST'])
 def authentication():
     data = TemplateData()
     if request.method == 'GET':
         return render_template("registration.html", **data.__dict__)
-    data.login = request.args.get("login", "", type=str)
-    enc = password_encoder.encoder(request.args.get("password", "", type=str))
-    # user =
-    return render_template("registration.html", **data.__dict__)
+    login = request.form.get("login")
+    raw_pass = request.form.get("password")
+    raw_pass = str.encode(raw_pass)
+    hash_pass = hashlib.md5(raw_pass).hexdigest()
+    user = User(login, hash_pass)
+    resp = render_template("registration.html", **data.__dict__)
+    if login.__len__() > 0 and raw_pass.__len__() > 0:
+        user_repos = UserRepository()
+        if user_repos.find_by_login(get_list(user.login)):
+            return "user already exist"
+        UserRepository().save_user(user)
+        data.login = login
+        resp = make_response(render_template("registration.html", **data.__dict__))
+        resp.set_cookie('auth', user.login + '.' + user.password)
+    return resp
+
+
+@app.route("/logout", methods=['GET'])
+def logout():
+    resp = make_response(start())
+    resp.set_cookie("auth", '', expires=0)
+    return resp
