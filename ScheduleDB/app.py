@@ -63,16 +63,10 @@ def change_arg(arg, val):
     return '{}?{}'.format(request.path, url_encode(args))
 
 
-@app.route('/')
-def start():
-    data = TemplateData()
-    return render_template('start_page.html', **data.__dict__)
-
-
-@app.route('/<int:selected_table_index>/')
-def index(selected_table_index=0):
+def get_user(request):
     data = TemplateData()
     credentials = 2
+    data.credentials = credentials
     if 'auth' in request.cookies:
         auth_cookie = request.cookies.get("auth")
         cookie_list = auth_cookie.split('#')
@@ -83,9 +77,25 @@ def index(selected_table_index=0):
         if user_token.user is not None:
             credentials = user_token.user.get_privileges()
             data.login = login
+            data.credentials = credentials
+            return data
+    return None
 
-    else:
-        return redirect('/')
+
+@app.route('/')
+def start():
+    data = get_user(request)
+    if data is None:
+        data = TemplateData()
+        redirect('/')
+    return render_template('start_page.html', **data.__dict__)
+
+
+@app.route('/<int:selected_table_index>/')
+def index(selected_table_index=0):
+    data = get_user(request)
+    if data is None:
+        data = TemplateData()
 
     if 0 <= selected_table_index < len(tables):
         data.selected_table_index = selected_table_index
@@ -156,7 +166,9 @@ def correct_values(values):
 
 @app.route('/<int:selected_table_index>/add/')
 def add_record(selected_table_index=0):
-    data = TemplateData
+    data = get_user(request)
+    if data is None:
+        data = TemplateData()
     data.f_olap_col = request.args.get('col', None, type=int)
     data.f_olap_row = request.args.get('row', None, type=int)
     data.f_olap_col_val = request.args.get('col_value', None, type=str)
@@ -177,7 +189,9 @@ def add_record(selected_table_index=0):
 
 @app.route('/<int:selected_table_index>/modify/<int:rec_id>/')
 def modify(selected_table_index=0, rec_id=0):
-    data = TemplateData
+    data = get_user(request)
+    if data is None:
+        data = TemplateData()
     data.table = tables[selected_table_index]
     data.values = data.table.fetch_all()
     data.titles = data.table.columns.get_titles_without_id()
@@ -221,7 +235,9 @@ def drop(rec_id=0):
 
 @app.route('/schedule/')
 def view_schedule():
-    data = TemplateData()
+    data = get_user(request)
+    if data is None:
+        data = TemplateData()
     table = SchedItems()
 
     data.delId = request.args.get('delid', -1, type=int)
@@ -322,7 +338,9 @@ def view_schedule():
 @app.route("/conflicts/")
 @app.route("/conflicts/<int:type_id>/")
 def conflict(type_id=0):
-    data = TemplateData()
+    data = get_user(request)
+    if data is None:
+        data = TemplateData()
     data.table = SchedItems()
     data.viewedNames = data.table.columns.get_titles()
     data.delId = request.args.get('delID', -1, type=int)
@@ -354,7 +372,9 @@ def conflict(type_id=0):
 
 @app.route("/registration/", methods=['GET', 'POST'])
 def authentication():
-    data = TemplateData()
+    data = get_user(request)
+    if data is None:
+        data = TemplateData()
     if request.method == 'GET':
         return render_template("registration.html", **data.__dict__)
     login = request.form.get("login")
@@ -378,4 +398,28 @@ def authentication():
 def logout():
     resp = make_response(start())
     resp.set_cookie("auth", '', expires=0)
+    return resp
+
+
+@app.route("/signIn", methods=['GET', 'POST'])
+def sign_in():
+    data = get_user(request)
+    if data is None:
+        data = TemplateData()
+    if request.method == 'POST':
+        login = request.form.get("login")
+        raw_pass = request.form.get("password")
+        if login.__len__() < 1 or raw_pass.__len__() < 1:
+            return redirect('/signIn')
+        user_repos = UserRepository()
+        auth_service = AuthenticateService(user_repos)
+        user_token = auth_service.authenticate_by_log_pass(login, raw_pass)
+
+        if not user_token.is_anon():
+            data.login = login
+            resp = make_response(render_template("start_page.html", **data.__dict__))
+            cookie = auth_service.generate_credentials(user_token.user)
+            resp.set_cookie('auth', cookie)
+            return resp
+    resp = make_response(render_template("sign_in.html", **data.__dict__))
     return resp

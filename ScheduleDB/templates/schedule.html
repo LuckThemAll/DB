@@ -224,15 +224,17 @@
                                             </tr>
                                         {% endif %}
                                     {% endfor %}
-                                    <tr>
-                                        <th {% if header_view == 'false' %}hidden{% endif %} class="card_header">
-                                            <a>Действия:</a>
-                                        </th>
-                                        <th>
-                                            <a class="actions" target="_blank" href="/4/modify/{{list[0][0]}}">Редактировать</a><br>
-                                            <button type="submit" name="delid" value="{{list[0][0]}}" style="margin-bottom: 3px">Удалить</button>
-                                        </th>
-                                    </tr>
+                                    {% if credentials == 1 %}
+                                        <tr>
+                                            <th {% if header_view == 'false' %}hidden{% endif %} class="card_header">
+                                                <a>Действия:</a>
+                                            </th>
+                                            <th>
+                                                <a class="actions" target="_blank" href="/4/modify/{{list[0][0]}}">Редактировать</a><br>
+                                                <button type="submit" name="delid" value="{{list[0][0]}}" style="margin-bottom: 3px">Удалить</button>
+                                            </th>
+                                        </tr>
+                                    {% endif %}
                                 </table>
                             </div>
                         {% endfor %}
