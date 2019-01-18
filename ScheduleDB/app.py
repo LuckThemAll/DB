@@ -396,7 +396,7 @@ def authentication():
 
 @app.route("/logout", methods=['GET'])
 def logout():
-    resp = make_response(start())
+    resp = make_response(redirect('/'))
     resp.set_cookie("auth", '', expires=0)
     return resp
 

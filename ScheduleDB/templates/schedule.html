@@ -199,17 +199,18 @@
                 {{ key1[0] }}
             </th>
             {% for key2, value in dict.items() %}
-                <th class="main_th" ondrop="drop(event)" ondragover="allowDrop(event)"
-                    cval="{{key1[1]}}" rval="{{key2[1]}}"><br>
-                    <button onclick="window.open('/4/add/?col={{sel_x}}&row={{sel_y}}&row_value={{key1[0]}}&col_value={{key2[0]}}'); return false;">
-                        Добавить карточку</button><br><br>
+                <th class="main_th" {% if credentials == 1 %} ondrop="drop(event)" ondragover="allowDrop(event)"
+                    cval="{{key1[1]}}" rval="{{key2[1]}}"{%endif%}><br>
+                    {% if credentials == 1 %}<button onclick="window.open('/4/add/?col={{sel_x}}&row={{sel_y}}&row_value={{key1[0]}}&col_value={{key2[0]}}'); return false;">
+                        Добавить карточку</button><br><br>{% endif %}
+
                     {% if not value is none %}
                         {% for list in value %}
                             <div class="card_block {% if list[0][0] in conflictingIDs %}conf {% endif %}"
                                  {% if not list == value[0] %} style="visibility: collapse" {% endif %}
-                                 draggable="true" ondragstart="drag(event)"
+                                 {% if credentials == 1 %}draggable="true" ondragstart="drag(event)"
                                  ondblclick="window.open('/4/modify/{{list[0]}}'); return false;" id="{{list[0][0]}}"
-                                 cval="{{key1[1]}}" rval="{{key2[1]}}">
+                                 cval="{{key1[1]}}" rval="{{key2[1]}}" {%endif%}>
                                 <table style="border-collapse: collapse">
                                     {% for i in col_indexes %}
                                         {% if projections[i] in showed_cols %}

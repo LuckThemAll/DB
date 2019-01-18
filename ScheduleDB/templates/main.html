@@ -99,7 +99,7 @@
                 <a {% if page+1 == paging.current_page %} class="cur_page" {% endif %}
                     href = {{ change_arg("current_page",  page + 1) }}>{{ page + 1 }}</a>
             {% endfor %}<br>
-            <input type="button" onclick="window.open('./add')" value="Добавить запись" >
+            {% if credentials == 1 %}<input type="button" onclick="window.open('./add')" value="Добавить запись" >{% endif %}
             <input type="button" onclick="window.open('/schedule')" value="Просмотреть расписание" >
         </div>
         <div style=" padding: 10px;">
@@ -122,15 +122,17 @@
                                 </div>
                             </th>
                         {% endfor %}
-                        <th></th>
+                        {% if credentials == 1 %}<th></th>{% endif %}
                     </thead>
                     {% for record in records %}
                         <tr>
                             {% for col in record %}
                                 <td style="width: 0px">{% if col == None %} {% else %} {{ col }} {% endif%} </td>
                             {% endfor %}
-                            <td><a target="_blank" href = "./modify/{{ record[0] }}">Редактировать</a><br>
-                            <button type="submit" name="delid" value="{{record[0]}}">Удалить</button></td>
+                            {% if credentials == 1 %}
+                                <td><a target="_blank" href = "./modify/{{ record[0] }}">Редактировать</a><br>
+                                <button type="submit" name="delid" value="{{record[0]}}">Удалить</button></td>
+                            {% endif %}
                         </tr>
                     {% endfor %}
                 </table>
