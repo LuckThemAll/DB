@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!--<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">-->
+    <link rel="stylesheet" href="../static/css/bulma.css">
     <script>
         function delete_param(div_id, p_count_id){
             p_count_id.value = p_count_id.value - 1;
@@ -23,12 +24,27 @@
     </script>
 </head>
 <body>
-        <h3>
-            <a href="/schedule/" class="std_button">Аналитика    </a>
-            <a href="/conflicts/" class="std_button">Конфликты   </a>
-            <a href="/0" class="std_button">Таблицы   </a>
-            <br>
-        </h3>
+    <nav class="level">
+        <div class="level-left">
+            <p class="level-item"><a href="/">Главная</a></p>
+            {% if login != '' %}
+                <p class="level-item"><a class="button" href="/userInfo">Профиль</a></p>
+                <p class="level-item"><a class="button is-outlined" href="/logout">Выход</a></p>
+            {% endif %}
+        </div>
+        <div class="level-right">
+            {% if login == '' %}
+                <p class="level-item"><a class="button is-success" href="/signIn">Вход</a></p>
+                <p class="level-item"><a class="button is-warning" href="/registration">Регистрация</a></p>
+            {% endif %}
+        </div>
+    </nav>
+    <h3>
+        <a href="/schedule/" class="button">Аналитика    </a>
+        <a href="/conflicts/" class="button">Конфликты   </a>
+        <a href="/0" class="button">Таблицы   </a>
+        <br>
+    </h3>
     <menu class="top_menu">
         {% for table in tables %}
             <li><a href="/{{ loop.index0 }}">{{ table.title }}</a></li>
@@ -86,16 +102,16 @@
             <input type="button" onclick="window.open('./add')" value="Добавить запись" >
             <input type="button" onclick="window.open('/schedule')" value="Просмотреть расписание" >
         </div>
-        <div class="right_col" style="float: left; padding: 10px;">
+        <div style=" padding: 10px;">
              {% if selected_table_index is defined %}
-                <table border="3" width="30%">
+                <table class="table is-bordered is-striped is-narrow is-hoverable" border="3" >
                     <thead>
                         {% for header in headers %}
-                            <th class="main_header">
+                            <th >
                                 <div onclick="change_sort_type(h_sort_type, h_sort_by_col, {{loop.index0}}, main_form)">
                                     <a style="color: #0000A2; cursor: pointer">
-                                        <div class="container">
-                                            <div class="box">
+                                        <div>
+                                            <div class="button centered">
                                                 <div>{{ header }}</div>
                                                 {% if sort_by_col|int == loop.index0 %}
                                                     <div>{% if sort_type == "desc" %} ↓ {% else  %} ↑ {% endif %}</div>

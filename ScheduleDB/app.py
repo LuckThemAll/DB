@@ -3,6 +3,8 @@ from flask import render_template
 from flask import request
 from werkzeug.urls import url_encode
 from math import ceil
+
+from authenticate_service import AuthenticateService
 from conflicts import *
 import hashlib
 from user_repository import UserRepository
@@ -70,8 +72,23 @@ def start():
 @app.route('/<int:selected_table_index>/')
 def index(selected_table_index=0):
     data = TemplateData()
-    if 0 <= selected_table_index < len(tables):
+    credentials = 2
+    if 'auth' in request.cookies:
+        auth_cookie = request.cookies.get("auth")
+        cookie_list = auth_cookie.split('#')
+        login = cookie_list[0]
+        user_repos = UserRepository()
+        auth_service = AuthenticateService(user_repos)
+        user_token = auth_service.authenticate_by_log_pass(auth_cookie)
+        if user_token.user is not None:
+            credentials = user_token.user.get_privileges()
 
+    else:
+        resp = make_response(start())
+        # resp.set_cookie("auth", '', expires=0)
+        # return resp
+
+    if 0 <= selected_table_index < len(tables):
         data.selected_table_index = selected_table_index
 
         selected_table = tables[selected_table_index]
@@ -354,7 +371,7 @@ def authentication():
         UserRepository().save_user(user)
         data.login = login
         resp = make_response(render_template("registration.html", **data.__dict__))
-        resp.set_cookie('auth', user.login + '.' + user.password)
+        resp.set_cookie('auth', user.login + '#' + user.password)
     return resp
 
 
