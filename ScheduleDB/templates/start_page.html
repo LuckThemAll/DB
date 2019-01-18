@@ -2,10 +2,24 @@
 <html>
  <head>
   <meta charset="utf-8">
-  <link rel="stylesheet" href="static/style.css">
+     <link rel="stylesheet" href="../static/css/bulma.css">
  </head>
  <body>
- <a href="/registration" style="float: right" methods="GET">Registration</a></br>
+ <nav class="level">
+        <div class="level-left">
+            <p class="level-item"><a href="/">Главная</a></p>
+            {% if login != '' %}
+                <p class="level-item"><a class="button" href="/userInfo">Профиль</a></p>
+                <p class="level-item"><a class="button is-outlined" href="/logout">Выход</a></p>
+            {% endif %}
+        </div>
+        <div class="level-right">
+            {% if login == '' %}
+                <p class="level-item"><a class="button is-success" href="/signIn">Вход</a></p>
+                <p class="level-item"><a class="button is-warning" href="/registration">Регистрация</a></p>
+            {% endif %}
+        </div>
+    </nav>
  <menu class="top_menu">
          {% for table in tables %}
             <li><a href="/{{ loop.index0 }}">{{ table.title }}</a></li>

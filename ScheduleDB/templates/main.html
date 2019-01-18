@@ -107,11 +107,11 @@
                 <table class="table is-bordered is-striped is-narrow is-hoverable" border="3" >
                     <thead>
                         {% for header in headers %}
-                            <th >
+                            <th style="width: 0px">
                                 <div onclick="change_sort_type(h_sort_type, h_sort_by_col, {{loop.index0}}, main_form)">
                                     <a style="color: #0000A2; cursor: pointer">
-                                        <div>
-                                            <div class="button centered">
+                                        <div class="has-text-centered">
+                                            <div class="button">
                                                 <div>{{ header }}</div>
                                                 {% if sort_by_col|int == loop.index0 %}
                                                     <div>{% if sort_type == "desc" %} ↓ {% else  %} ↑ {% endif %}</div>
@@ -127,7 +127,7 @@
                     {% for record in records %}
                         <tr>
                             {% for col in record %}
-                                <td>{% if col == None %} {% else %} {{ col }} {% endif%} </td>
+                                <td style="width: 0px">{% if col == None %} {% else %} {{ col }} {% endif%} </td>
                             {% endfor %}
                             <td><a target="_blank" href = "./modify/{{ record[0] }}">Редактировать</a><br>
                             <button type="submit" name="delid" value="{{record[0]}}">Удалить</button></td>

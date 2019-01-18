@@ -95,6 +95,27 @@
     </script>
 </head>
 <body>
+    <nav>
+        <div>
+
+            <div style="display: inline-block;">
+                <a href="/">Главная</a></p>
+            </div>
+
+            <div style="display: inline-block; float: right">
+            {% if login != '' %}
+                <a class="button" href="/userInfo">Профиль</a>
+                <a class="button is-outlined" href="/logout">Выход</a>
+            {% endif %}
+            </div>
+            <div style="display: inline-block; float: right">
+                {% if login == '' %}
+                    <a href="/signIn">Вход</a>
+                    <a href="/registration">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
 <form id="main_form">
     <h3>
         <a href="/schedule/" class="std_button">Аналитика</a>

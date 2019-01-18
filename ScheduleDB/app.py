@@ -79,14 +79,13 @@ def index(selected_table_index=0):
         login = cookie_list[0]
         user_repos = UserRepository()
         auth_service = AuthenticateService(user_repos)
-        user_token = auth_service.authenticate_by_log_pass(auth_cookie)
+        user_token = auth_service.authenticate_by_bred(auth_cookie)
         if user_token.user is not None:
             credentials = user_token.user.get_privileges()
+            data.login = login
 
     else:
-        resp = make_response(start())
-        # resp.set_cookie("auth", '', expires=0)
-        # return resp
+        return redirect('/')
 
     if 0 <= selected_table_index < len(tables):
         data.selected_table_index = selected_table_index

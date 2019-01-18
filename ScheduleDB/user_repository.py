@@ -1,4 +1,5 @@
 from db_connect import *
+from misc import *
 
 from users import Admin, User, privileges
 
@@ -9,7 +10,7 @@ class UserRepository:
 
     def find_by_login(self, login):
         query = "select * from " + self.table_name + " where login = ? ;"
-        cur.execute(query, login)
+        cur.execute(query, get_list(login))
         result = cur.fetchone()
         if result is not None:
             cred = int(result[3])
