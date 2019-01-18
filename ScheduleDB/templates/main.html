@@ -96,7 +96,7 @@
             <input type="number" name="recs_on_page" min="1" max="10000" value={{ paging.recs_on_page }}>
             Страницы:
             {% for page in range(paging.pages_count) %}
-                <a {% if page+1 == paging.current_page %} class="cur_page" {% endif %}
+                <a {% if page+1 == paging.current_page %} style="border: 1px solid black; padding: 3px; padding-top: 1px; padding-bottom: 1px" {% endif %}
                     href = {{ change_arg("current_page",  page + 1) }}>{{ page + 1 }}</a>
             {% endfor %}<br>
             {% if credentials == 1 %}<input type="button" onclick="window.open('./add')" value="Добавить запись" >{% endif %}

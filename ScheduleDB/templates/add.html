@@ -2,10 +2,11 @@
 <html>
  <head>
   <meta charset="utf-8">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!--<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">-->
+     <link rel="stylesheet" href="../../static/css/bulma.css">
  </head>
  <body>
-    <form>
+    <form style="padding: 20px">
         <input type="hidden" name="col" value="{{ f_olap_col }}">
         <input type="hidden" name="row" value="{{ f_olap_row }}">
         <input type="hidden" name="col_value" value="{{ f_olap_col_val }}">
@@ -13,30 +14,35 @@
         <table>
             <tr>
             {% for title in titles %}
-                <th>{{ title }}</th>
+                <th style="padding: 2px">{{ title }}</th>
             {% endfor %}
             </tr>
             <tr>
             {% for option in options %}
-                <th>
+                <th style="padding: 2px">
                     {% if options[option] == None %}
                         <input name="p" type="text">
                     {% else %}
-                    <select style="width: 130px" name="p">
-                        <option></option>
-                        {% for row in options[option]['val'] %}
-                            <option {% if options[option]['index'] == f_olap_col and options[option]['val'][row] == f_olap_col_val %} selected {% endif %}
-                        {% if options[option]['index'] == f_olap_row and options[option]['val'][row] == f_olap_row_val %} selected {% endif %}
-                        value="{{ row }}">{{ options[option]['val'][row] }}</option>
-                        {% endfor %}
+                    <div class="select">
+                        <select style="width: 130px" name="p">
+                            <option></option>
+                            {% for row in options[option]['val'] %}
+                                <option {% if options[option]['index'] == f_olap_col and options[option]['val'][row] == f_olap_col_val %} selected {% endif %}
+                            {% if options[option]['index'] == f_olap_row and options[option]['val'][row] == f_olap_row_val %} selected {% endif %}
+                            value="{{ row }}">{{ options[option]['val'][row] }}</option>
+                            {% endfor %}
                         </select>
+                    </div>
                     {% endif %}
+
                 </th>
             {% endfor %}
             </tr>
         </table>
-        <input type="submit" value="Добавить и продолжить">
-        <input type="submit" value="Закрыть" onclick="window.close()">
+        <div style="padding-top: 10px">
+            <input class="button is-success" type="submit"  value="Добавить и продолжить">
+            <input class="button is-danger" type="submit" value="Закрыть" onclick="window.close()">
+        </div>
     </form>
  </body>
 </html>

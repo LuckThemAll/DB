@@ -2,36 +2,45 @@
 <html>
  <head>
      <meta charset="utf-8">
-     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+     <!--<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">-->
+     <link rel="stylesheet" href="../../../static/css/bulma.css">
  </head>
  <body>
-    <form>
+</div>
+    <form style="padding: 20px">
         <table>
             <tr>
             {% for title in titles %}
-                <th>{{ title }}</th>
+                <th style="padding: 2px">{{ title }}</th>
             {% endfor %}
             </tr>
             <tr>
             {% for option in options %}
-                <th>
+                <th  style="padding: 2px">
                     {% if options[option] == None %}
                         <input name="p" type="text" value="{{ current_values[loop.index0] }}">
                     {% else %}
-                    <select style="width: 130px" name="p">
-                        <option></option>
-                        {% for row in options[option]['val'] %}
-                            <option {% if current_values[options[option]['index']] == row %} selected {% endif %}
-                                value="{{ row }}">{{ options[option]['val'][row] }}
-                            </option>
-                        {% endfor %}
+                    <div class="select" >
+                        <select style="width: 170px"  name="p">
+                            <option></option>
+                            {% for row in options[option]['val'] %}
+                                <option {% if current_values[options[option]['index']] == row %} selected {% endif %}
+                                    value="{{ row }}" >{{ options[option]['val'][row] }}
+                                </option>
+                            {% endfor %}
                         </select>
+                    </div>
                     {% endif %}
                 </th>
             {% endfor %}
             </tr>
         </table>
-        <input type="submit" value="Сохранить и продолжить">
+        <div style="padding-top: 10px">
+            <input class="button is-success" type="submit"  value="Сохранить и продолжить">
+            <input class="button is-danger" type="submit" value="Закрыть" onclick="window.close()">
+        </div>
+
+
     </form>
  </body>
 </html>
