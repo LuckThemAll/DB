@@ -26,10 +26,12 @@ class UserRepository:
         if user:
             query = "insert into " + self.table_name + "(login, pass, cred) values (?,?,?)"
             params = [user.get_login(), user.get_password(), user.get_privileges()]
-            print("_____________________________s")
-            print(params)
             cur.execute(query, params)
             cur.transaction.commit()
 
-
-
+    def get_all_users(self, current_admin):
+        if current_admin.get_privileges() == 1:
+            query = "select login, cred  from " + self.table_name + " where login <> (?)"
+            cur.execute(query, get_list(current_admin.get_login()))
+            return cur.fetchall()
+        return None

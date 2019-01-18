@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ login }} UserInfo</title>
+    <link rel="stylesheet" href="../static/css/bulma.css">
+</head>
+<body>
+<nav class="level">
+        <div class="level-left">
+            <p class="level-item"><a href="/">Главная</a></p>
+            {% if login != '' %}
+                <p class="level-item"><a class="button" href="/userInfo">Профиль</a></p>
+                <p class="level-item"><a class="button is-outlined" href="/logout">Выход</a></p>
+            {% endif %}
+        </div>
+        <div class="level-right">
+            {% if login == '' %}
+                <p class="level-item"><a class="button is-success" href="/signIn">Вход</a></p>
+                <p class="level-item"><a class="button is-warning" href="/registration">Регистрация</a></p>
+            {% endif %}
+        </div>
+    </nav>
+{% if credentials == 1 %}
+<div style="padding: 40px">
+    <table class="table is-bordered is-striped is-narrow is-hoverable">
+        <thead>
+            <tr>
+                <th>
+                    Логин
+                </th>
+                <th>
+                    Роль
+                </th>
+            </tr>
+        </thead>
+        <tfoot>
+            <tr>
+                <th>
+                    Логин
+                </th>
+                <th>
+                    Роль
+                </th>
+            </tr>
+        </tfoot>
+        <tbody>
+         {% for user in users %}
+            <tr>
+                {% for row in user %}
+                    <td>
+                        {% if row|int %}
+                            {% if row == 1 %}
+                                Администратор
+                            {% endif %}
+                            {% if row != 1 %}
+                                Пользователь
+                            {% endif %}
+                        {% else %}
+                            {{ row }}
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+Добро пожаловать в личный кабинет, <b> {{login}}</b>!
+{% endif %}
+
+</body>
+</html>

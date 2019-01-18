@@ -38,6 +38,8 @@ class Paging:
 
 class TemplateData:
     def __init__(self):
+        self.user_token = None
+        self.credentials = 2
         self.tables = tables
         self.table = None
         self.login = ''
@@ -65,8 +67,6 @@ def change_arg(arg, val):
 
 def get_user(request):
     data = TemplateData()
-    credentials = 2
-    data.credentials = credentials
     if 'auth' in request.cookies:
         auth_cookie = request.cookies.get("auth")
         cookie_list = auth_cookie.split('#')
@@ -75,6 +75,7 @@ def get_user(request):
         auth_service = AuthenticateService(user_repos)
         user_token = auth_service.authenticate_by_bred(auth_cookie)
         if user_token.user is not None:
+            data.user_token = user_token
             credentials = user_token.user.get_privileges()
             data.login = login
             data.credentials = credentials
@@ -422,4 +423,20 @@ def sign_in():
             resp.set_cookie('auth', cookie)
             return resp
     resp = make_response(render_template("sign_in.html", **data.__dict__))
+    return resp
+
+
+@app.route("/userInfo", methods=['GET', 'POST'])
+def get_user_info():
+    data = get_user(request)
+    if data is None:
+        data = TemplateData()
+
+    user_repos = UserRepository()
+    if data.credentials == 1 and data.user_token is not None:
+        users = user_repos.get_all_users(data.user_token.user)
+        data.users = users
+    if request.method == 'GET':
+        resp = render_template("user_info.html", **data.__dict__)
+
     return resp
