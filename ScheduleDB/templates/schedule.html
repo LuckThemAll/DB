@@ -117,12 +117,14 @@
         </div>
     </nav>
 <form id="main_form">
-    <h3>
-        <a href="/schedule/" class="std_button">Аналитика</a>
-        <a href="/conflicts/" class="std_button">Конфликты</a>
-        <a href="/0" class="std_button">Таблицы</a>
-        <br>
-    </h3>
+    {% if login != "" %}
+        <h3>
+            <a href="/schedule/" class="std_button">Аналитика</a>
+            <a href="/conflicts/" class="std_button">Конфликты</a>
+            <a href="/0" class="std_button">Таблицы</a>
+            <br>
+        </h3>
+    {% endif %}
     <input type="hidden" name="p_change_flag" id="p_ch_flag" value="{{ p_change_flag }}">
     <input type="hidden" name="header_view" id="header_view_id" value="{{ header_view }}">
     <input type="hidden" id="x_proj_id" value="{{sel_x}}">

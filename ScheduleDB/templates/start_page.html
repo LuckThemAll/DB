@@ -20,10 +20,20 @@
             {% endif %}
         </div>
     </nav>
- <menu class="top_menu">
-         {% for table in tables %}
-            <li><a href="/{{ loop.index0 }}">{{ table.title }}</a></li>
-         {% endfor %}
+
+    <h3>
+        <a href="/schedule/" class="button">Аналитика    </a>
+        {% if login != "" %}
+            <a href="/conflicts/" class="button">Конфликты   </a>
+            <a href="/0" class="button">Таблицы   </a><br>
+        {% endif %}
+    </h3>
+    <menu class="top_menu">
+        {% if login != "" %}
+            {% for table in tables %}
+                <li><a href="/{{ loop.index0 }}">{{ table.title }}</a></li>
+            {% endfor %}
+        {% endif %}
      </menu>
  </body>
 </html>
