@@ -418,6 +418,7 @@ def sign_in():
 
         if not user_token.is_anon():
             data.login = login
+            data.credentials = user_token.user.get_privileges()
             resp = make_response(render_template("start_page.html", **data.__dict__))
             cookie = auth_service.generate_credentials(user_token.user)
             resp.set_cookie('auth', cookie)

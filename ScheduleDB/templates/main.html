@@ -39,9 +39,11 @@
             {% endif %}
         </div>
     </nav>
-    <h3>
+    <h3 style="padding-left: 20px">
         <a href="/schedule/" class="button">Аналитика    </a>
-        <a href="/conflicts/" class="button">Конфликты   </a>
+        {% if credentials == 1%}
+            <a href="/conflicts/" class="button">Конфликты   </a>
+        {% endif %}
         <a href="/0" class="button">Таблицы   </a>
         <br>
     </h3>

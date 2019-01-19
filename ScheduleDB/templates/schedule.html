@@ -118,9 +118,11 @@
     </nav>
 <form id="main_form">
     {% if login != "" %}
-        <h3>
+        <h3  style="padding-left: 20px">
             <a href="/schedule/" class="std_button">Аналитика</a>
-            <a href="/conflicts/" class="std_button">Конфликты</a>
+            {% if credentials == 1 %}
+                <a href="/conflicts/" class="std_button">Конфликты</a>
+            {% endif %}
             <a href="/0" class="std_button">Таблицы</a>
             <br>
         </h3>
