@@ -386,8 +386,8 @@ def authentication():
     resp = render_template("registration.html", **data.__dict__)
     if login.__len__() > 0 and raw_pass.__len__() > 0:
         user_repos = UserRepository()
-        if user_repos.find_by_login(get_list(user.login)):
-            return "user already exist"
+        if user_repos.find_by_login(get_list(user.login)) is None:
+            return "Error: User " + user.login + " already exist</br><a href=\"/\">На главную</a>"
         UserRepository().save_user(user)
         data.login = login
         resp = make_response(render_template("registration.html", **data.__dict__))
