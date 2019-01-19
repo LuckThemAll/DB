@@ -9,4 +9,4 @@ class UserToken:
         return self.user
 
     def is_anon(self):
-        return type(self.user) is None
+        return self.user is None

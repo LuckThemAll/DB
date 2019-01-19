@@ -415,7 +415,6 @@ def sign_in():
         user_repos = UserRepository()
         auth_service = AuthenticateService(user_repos)
         user_token = auth_service.authenticate_by_log_pass(login, raw_pass)
-
         if not user_token.is_anon():
             data.login = login
             data.credentials = user_token.user.get_privileges()
